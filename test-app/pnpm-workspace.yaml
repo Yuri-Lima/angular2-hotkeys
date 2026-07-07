@@ -1,0 +1,8 @@
+# Standalone install settings for test-app.
+# Nx targets also pass --ignore-workspace --config.dangerouslyAllowAllBuilds=true
+# because --ignore-workspace does not load root allowBuilds.
+shamefullyHoist: true
+autoInstallPeers: true
+strictPeerDependencies: false
+confirmModulesPurge: false
+dangerouslyAllowAllBuilds: true

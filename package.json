@@ -1,6 +1,7 @@
 {
   "name": "angular2-hotkeys",
   "version": "22.0.0",
+  "packageManager": "pnpm@11.10.0",
   "scripts": {
     "nx": "nx",
     "build": "nx build angular2-hotkeys",
@@ -8,8 +9,8 @@
     "build:watch": "nx build angular2-hotkeys --watch",
     "ng": "ng",
     "lint": "nx lint angular2-hotkeys",
-    "release": "npm run build:release && npm publish dist/",
-    "release:beta": "npm run build:release && npm publish dist/ --tag beta",
+    "release": "pnpm run build:release && pnpm publish --dir dist",
+    "release:beta": "pnpm run build:release && pnpm publish --dir dist --tag beta",
     "start": "nx serve test-app",
     "test": "nx test angular2-hotkeys",
     "test:test-app": "nx test test-app",
@@ -39,7 +40,8 @@
   },
   "sideEffects": false,
   "engines": {
-    "node": "^22.22.3 || ^24.15.0 || >=26.0.0"
+    "node": "^22.22.3 || ^24.15.0 || >=26.0.0",
+    "pnpm": ">=9.0.0"
   },
   "dependencies": {
     "mousetrap": "^1.6.5",

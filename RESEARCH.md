@@ -267,5 +267,6 @@
 
 - Changing `Hotkey` model public constructor/fields.  
 - Renaming `cfp-hotkeys-*` CSS classes.  
-- Adding production npm dependencies beyond existing `mousetrap` / `tslib`.  
+- Adding production package dependencies beyond existing `mousetrap` / `tslib`.  
+
 - Pushing commits to remote (local only; PR via `gh pr create` at end).

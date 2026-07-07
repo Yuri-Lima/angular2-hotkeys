@@ -35,7 +35,7 @@
   },
   "analytics": false,
   "cli": {
-    "packageManager": "npm"
+    "packageManager": "pnpm"
   },
   "tui": {
     "enabled": false

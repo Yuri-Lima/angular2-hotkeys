@@ -27,7 +27,7 @@ Compiling on Angular 22 is not enough — this line **uses** Angular 22 APIs: `i
 | **Peers** | `@angular/core` · `@angular/common` **`>=20.0.0 <23.0.0`** · `rxjs` `^7` |
 | **Runtime** | Node `^22.22.3 \|\| ^24.15.0 \|\| >=26` · see [`.nvmrc`](.nvmrc) |
 | **zone.js** | **Not required** — library UI is signal-driven |
-| **Demo** | [`test-app/`](./test-app) · zoneless · `npx nx serve test-app` → `http://127.0.0.1:4300/` |
+| **Demo** | [`test-app/`](./test-app) · zoneless · `pnpm exec nx serve test-app` → `http://127.0.0.1:4300/` |
 | **Dashboard** | [`ui/`](./ui) · `make ui` → `http://localhost:8765/` |
 | **Research** | [`RESEARCH.md`](./RESEARCH.md) — 17 Angular 21/22 APIs evaluated |
 
@@ -123,13 +123,13 @@ You do **not** need to write RxJS code to use this library. If your app is fully
 ## Installation
 
 ```bash
-npm install angular2-hotkeys
+pnpm add angular2-hotkeys
 ```
 
 Ensure peers are present (most Angular apps already have them):
 
 ```bash
-npm install @angular/core@^22 @angular/common@^22 rxjs@^7
+pnpm add @angular/core@^22 @angular/common@^22 rxjs@^7
 ```
 
 `rxjs` is a **peer dependency only** — this package does not use Observables internally (see [Why is `rxjs` in `package.json`?](#why-is-rxjs-in-packagejson)). You do **not** need `zone.js` if your app uses zoneless change detection.
@@ -466,19 +466,22 @@ This repository is an [Nx](https://nx.dev) monorepo.
 git clone https://github.com/Yuri-Lima/angular2-hotkeys.git
 cd angular2-hotkeys
 nvm use                          # Node version from .nvmrc (≥ 22.22.3)
-npm install --legacy-peer-deps
+corepack enable                  # uses packageManager from package.json
+pnpm install
 ```
+
+> This repository uses **pnpm only** (`packageManager` + `pnpm-lock.yaml`). Do not commit `package-lock.json` / `yarn.lock`.
 
 ### Common commands
 
 ```bash
 # Library
-npx nx build angular2-hotkeys --configuration=production
-npx nx test angular2-hotkeys     # Karma + Jasmine, ChromeHeadless, coverage ≥ 85%
-npx nx lint angular2-hotkeys
+pnpm exec nx build angular2-hotkeys --configuration=production
+pnpm exec nx test angular2-hotkeys     # Karma + Jasmine, ChromeHeadless, coverage ≥ 85%
+pnpm exec nx lint angular2-hotkeys
 
 # Zoneless demo app (builds the library when needed)
-npx nx serve test-app            # http://127.0.0.1:4300/
+pnpm exec nx serve test-app            # http://127.0.0.1:4300/
 
 # Modernization dashboard
 make ui                          # http://localhost:8765/
@@ -487,7 +490,7 @@ make ui                          # http://localhost:8765/
 make prove
 
 # Project graph
-npx nx graph
+pnpm exec nx graph
 ```
 
 ### Quality bar
@@ -501,23 +504,23 @@ npx nx graph
 | Integration | `make prove` — Playwright `?` / `Esc` / `ctrl+s` against zoneless test-app |
 | Dashboard | `make ui` — research inventory, before/after diffs, live key demo |
 
-> **Gate vs measured:** “≥ 85%” is the **threshold in config**. The **94.81% / 94.55%** figures are the **actual** Karma report from a successful run — re-run `npx nx test angular2-hotkeys` and read the “Coverage summary” block for the current numbers. Do not treat a rounded “~95%” as the gate.
+> **Gate vs measured:** “≥ 85%” is the **threshold in config**. The **94.81% / 94.55%** figures are the **actual** Karma report from a successful run — re-run `pnpm exec nx test angular2-hotkeys` and read the “Coverage summary” block for the current numbers. Do not treat a rounded “~95%” as the gate.
 
 ---
 
 ## Scripts & Makefile
 
-### npm scripts (root)
+### pnpm scripts (root)
 
 | Script | Description |
 | :--- | :--- |
-| `npm start` | Serve the zoneless demo app (`nx serve test-app`) |
-| `npm run build` | Build the library |
-| `npm run build:release` | Production build for publish |
-| `npm test` | Library unit tests (includes zoneless suite) |
-| `npm run lint` | ESLint via Nx |
-| `npm run graph` | Open the Nx graph |
-| `npm run prove` | Browser integration proof against `:4300` |
+| `pnpm start` | Serve the zoneless demo app (`nx serve test-app`) |
+| `pnpm run build` | Build the library |
+| `pnpm run build:release` | Production build for publish |
+| `pnpm test` | Library unit tests (includes zoneless suite) |
+| `pnpm run lint` | ESLint via Nx |
+| `pnpm run graph` | Open the Nx graph |
+| `pnpm run prove` | Browser integration proof against `:4300` |
 
 ### Makefile
 

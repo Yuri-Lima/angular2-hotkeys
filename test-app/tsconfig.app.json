@@ -2,14 +2,8 @@
   "extends": "./tsconfig.json",
   "compilerOptions": {
     "outDir": "./out-tsc/app",
-    "types": [],
-    "paths": {
-      "angular2-hotkeys": ["../src/public-api.ts"],
-      "@angular/core": ["./node_modules/@angular/core"],
-      "@angular/common": ["./node_modules/@angular/common"],
-      "@angular/platform-browser": ["./node_modules/@angular/platform-browser"]
-    }
+    "types": []
   },
-  "include": ["src/**/*.ts", "../src/**/*.ts"],
-  "exclude": ["src/**/*.spec.ts", "../src/**/*.spec.ts"]
+  "include": ["src/**/*.ts"],
+  "exclude": ["src/**/*.spec.ts"]
 }

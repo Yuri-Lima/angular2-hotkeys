@@ -19,8 +19,8 @@
       ],
       "options": {
         "commands": [
-          "npm install --no-fund --no-audit",
-          "npx ng build --configuration production"
+          "pnpm install --ignore-workspace --config.dangerouslyAllowAllBuilds=true",
+          "pnpm exec ng build --configuration production"
         ],
         "cwd": "test-app",
         "parallel": false
@@ -36,8 +36,8 @@
       ],
       "options": {
         "commands": [
-          "npm install --no-fund --no-audit",
-          "npx ng serve --port 4300 --host 127.0.0.1 --configuration development"
+          "pnpm install --ignore-workspace --config.dangerouslyAllowAllBuilds=true",
+          "pnpm exec ng serve --port 4300 --host 127.0.0.1 --configuration development"
         ],
         "cwd": "test-app",
         "parallel": false
@@ -53,8 +53,8 @@
       ],
       "options": {
         "commands": [
-          "npm install --no-fund --no-audit",
-          "npx ng test --no-watch --browsers=ChromeHeadless"
+          "pnpm install --ignore-workspace --config.dangerouslyAllowAllBuilds=true",
+          "pnpm exec ng test --no-watch --browsers=ChromeHeadless"
         ],
         "cwd": "test-app",
         "parallel": false

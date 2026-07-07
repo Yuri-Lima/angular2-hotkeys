@@ -39,9 +39,16 @@ speed-measure-plugin*.json
 /libpeerconnection.log
 npm-debug.log
 yarn-error.log
+pnpm-debug.log
 testem.log
 /typings
 .angular
+
+# package managers — this repo uses pnpm only
+package-lock.json
+yarn.lock
+**/package-lock.json
+**/yarn.lock
 
 # System Files
 .DS_Store

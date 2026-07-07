@@ -1,0 +1,18 @@
+# pnpm 11+ project settings live here (not package.json "pnpm" field / most .npmrc keys).
+# https://pnpm.io/settings
+
+# Angular + Karma resolve more reliably with a flatter node_modules layout.
+shamefullyHoist: true
+autoInstallPeers: true
+strictPeerDependencies: false
+# Non-interactive installs (Nx, CI, scripts) must not prompt on node_modules changes.
+confirmModulesPurge: false
+
+# Allow postinstall scripts required by the Angular / Nx toolchain.
+allowBuilds:
+  '@parcel/watcher': true
+  esbuild: true
+  less: true
+  lmdb: true
+  msgpackr-extract: true
+  nx: true

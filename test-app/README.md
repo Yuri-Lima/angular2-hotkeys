@@ -22,7 +22,7 @@ This project consumes the library as a real dependency (`"angular2-hotkeys": "fi
 | :--- | :--- |
 | **Angular** | `^22.0.5` |
 | **TypeScript** | `~6.0` |
-| **zone.js** | `~0.16` |
+| **Package manager** | **pnpm** (same as monorepo root) |
 | **Serve URL** | [http://127.0.0.1:4300/](http://127.0.0.1:4300/) |
 | **Nx project** | `test-app` ([`project.json`](./project.json)) |
 | **Library input** | `file:../dist` — build the library first |
@@ -33,9 +33,10 @@ This project consumes the library as a real dependency (`"angular2-hotkeys": "fi
 
 ```bash
 nvm use
-npm install --legacy-peer-deps
-npx nx build angular2-hotkeys
-npx nx serve test-app
+corepack enable
+pnpm install
+pnpm exec nx build angular2-hotkeys
+pnpm exec nx serve test-app
 ```
 
 Open **http://127.0.0.1:4300/**.
@@ -47,12 +48,12 @@ Nx wires `test-app` to depend on the library `build` target so the package under
 ## Local commands (inside `test-app/`)
 
 ```bash
-# After a library build + npm install in this folder
-npm install --legacy-peer-deps
+# After a library build + install in this folder
+pnpm install --ignore-workspace --config.dangerouslyAllowAllBuilds=true
 
-npx ng serve --port 4300 --host 127.0.0.1 --configuration development
-npx ng build --configuration production
-npx ng test --no-watch --browsers=ChromeHeadless
+pnpm exec ng serve --port 4300 --host 127.0.0.1 --configuration development
+pnpm exec ng build --configuration production
+pnpm exec ng test --no-watch --browsers=ChromeHeadless
 ```
 
 > **Vite note:** `serve` excludes `angular2-hotkeys` from prebundling (`angular.json`) so the app and library share one `@angular/core` instance.
@@ -63,9 +64,9 @@ npx ng test --no-watch --browsers=ChromeHeadless
 
 | Target | Command (from repo root) |
 | :--- | :--- |
-| Serve | `npx nx serve test-app` |
-| Build | `npx nx build test-app` |
-| Test | `npx nx test test-app` |
+| Serve | `pnpm exec nx serve test-app` |
+| Build | `pnpm exec nx build test-app` |
+| Test | `pnpm exec nx test test-app` |
 
 Also available: `make serve-test-app` from the monorepo root.
 
