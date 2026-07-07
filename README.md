@@ -1,14 +1,43 @@
 # angular2-hotkeys
-Angular 16 and Ivy Compatible. Older versions might work but isn't officially tested.
+
+Angular keyboard shortcuts library (Mousetrap) with standalone APIs, Signals, and Nx workspace management.
+
+**Current target: Angular 22** (Node `^22.22.3 || ^24.15.0 || >=26`).
 
 ## Versions compatibility
-v2.4.0 - Angular 11 (most likely lower Angular versions)
 
-v13.*.* - Angular 13 (most likely Angular 12)
+| Library | Angular |
+| --- | --- |
+| v2.4.0 | Angular 11 (most likely lower Angular versions) |
+| v13.\*.\* | Angular 13 (most likely Angular 12) |
+| v15.\*.\* | Angular 15 |
+| v16.\*.\* | Angular 16 |
+| v20.\*.\* | Angular 20 (standalone + signals) |
+| **v22.\*.\*** | **Angular 22 + Nx workspace** |
 
-v15.*.* - Angular 15
+## Workspace (Nx)
 
-v16.*.* - Angular 16
+This repo is an [Nx](https://nx.dev) workspace (`nx@23.1` — latest line that supports Angular 22).
+
+```bash
+# Node 22.22+ required for Angular 22
+nvm use   # uses .nvmrc
+
+npm install --legacy-peer-deps
+
+# Library
+npx nx build angular2-hotkeys
+npx nx test angular2-hotkeys
+npx nx lint angular2-hotkeys
+
+# Demo consumer app (depends on library build)
+npx nx serve test-app
+
+# Task graph
+npx nx graph
+```
+
+Makefile shortcuts: `make build`, `make test`, `make lint`, `make serve-test-app`, `make ui`.
 
 ## Installation
 

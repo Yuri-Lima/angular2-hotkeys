@@ -48,7 +48,7 @@ export class Hotkey {
     public combo: string | string[],
     public callback: (event: KeyboardEvent, combo: string) => ExtendedKeyboardEvent | boolean,
     public allowIn?: string[],
-    public description?: string | Function,
+    public description?: string | (() => string),
     public action?: string,
     public persistent?: boolean,
   ) {

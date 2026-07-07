@@ -1,0 +1,44 @@
+{
+  "name": "angular2-hotkeys",
+  "$schema": "node_modules/nx/schemas/project-schema.json",
+  "projectType": "library",
+  "root": ".",
+  "sourceRoot": "src",
+  "prefix": "lib",
+  "tags": ["scope:lib", "type:publishable", "framework:angular"],
+  "targets": {
+    "build": {
+      "executor": "nx:run-commands",
+      "outputs": ["{workspaceRoot}/dist"],
+      "options": {
+        "command": "ng-packagr -p ng-package.json -c tsconfig.lib.json"
+      },
+      "configurations": {
+        "production": {
+          "command": "ng-packagr -p ng-package.json -c tsconfig.lib.prod.json"
+        },
+        "development": {
+          "command": "ng-packagr -p ng-package.json -c tsconfig.lib.json"
+        }
+      },
+      "defaultConfiguration": "production"
+    },
+    "test": {
+      "executor": "@angular-devkit/build-angular:karma",
+      "options": {
+        "main": "src/test.ts",
+        "tsConfig": "tsconfig.spec.json",
+        "karmaConfig": "karma.conf.js",
+        "codeCoverage": true,
+        "watch": false,
+        "browsers": "ChromeHeadless"
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint",
+      "options": {
+        "lintFilePatterns": ["src/**/*.ts", "src/**/*.html"]
+      }
+    }
+  }
+}

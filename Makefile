@@ -1,16 +1,22 @@
-.PHONY: ui build test prove serve-test-app
+.PHONY: ui build test prove serve-test-app graph lint
 
 build:
-	npx ng build angular2-hotkeys --configuration production
+	npx nx build angular2-hotkeys --configuration=production
 
 test:
-	npx ng test angular2-hotkeys --no-watch --browsers=ChromeHeadless --code-coverage
+	npx nx test angular2-hotkeys
+
+lint:
+	npx nx lint angular2-hotkeys
 
 serve-test-app:
-	cd test-app && npx ng serve --port 4300 --host 127.0.0.1 --configuration development
+	npx nx serve test-app
 
 prove:
 	node scripts/prove-test-app.mjs
+
+graph:
+	npx nx graph
 
 ui:
 	bash scripts/open-ui.sh

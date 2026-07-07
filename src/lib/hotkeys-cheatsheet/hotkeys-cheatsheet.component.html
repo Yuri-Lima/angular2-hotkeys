@@ -1,6 +1,6 @@
 <div class="cfp-hotkeys-container fade" [class.in]="helpVisible()">
     <div class="cfp-hotkeys">
-        <h4 class="cfp-hotkeys-title">{{ title }}</h4>
+        <h4 class="cfp-hotkeys-title">{{ title() }}</h4>
         <table>
             <tbody>
             @for (hotkey of hotkeys(); track hotkey) {
