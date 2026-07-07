@@ -1,10 +1,11 @@
+import { TestBed } from '@angular/core/testing';
 import { provideHotkeys, HotkeysService, Hotkey, HotkeyOptions } from 'angular2-hotkeys';
 
 /**
  * Unit-level checks for the public integration surface.
- * Full DI + browser behavior is verified by the Playwright proof script
- * (`scripts/prove-test-app.mjs`) against `ng serve --port 4300` — Karma's
- * bundler still dual-packages partial-Ivy FESMs in some Angular 20 setups.
+ * HotkeysService is DI-only (`inject(HotkeyOptions)` in constructor) — use
+ * TestBed / provideHotkeys, never `new HotkeysService()`.
+ * Full browser behavior: `scripts/prove-test-app.mjs` against port 4300.
  */
 describe('angular2-hotkeys package integration surface', () => {
   it('exports provideHotkeys, HotkeysService, Hotkey, HotkeyOptions', () => {
@@ -14,11 +15,16 @@ describe('angular2-hotkeys package integration surface', () => {
     expect(HotkeyOptions).toBeTruthy();
   });
 
-  it('HotkeysService.create registers default cheatsheet binding', () => {
-    const service = HotkeysService.create({
-      cheatSheetCloseEsc: true,
-      cheatSheetDescription: 'Show / hide this help menu',
+  it('HotkeysService via provideHotkeys registers default cheatsheet binding', () => {
+    TestBed.configureTestingModule({
+      providers: [
+        provideHotkeys({
+          cheatSheetCloseEsc: true,
+          cheatSheetDescription: 'Show / hide this help menu',
+        }),
+      ],
     });
+    const service = TestBed.inject(HotkeysService);
     expect(service.get('?')).toBeTruthy();
     expect(service.get('esc')).toBeTruthy();
     service.add(new Hotkey('ctrl+s', () => false, [], 'Save'));

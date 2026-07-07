@@ -23,7 +23,7 @@ export class HotkeyModule {
       ngModule: HotkeyModule,
       providers: [
         { provide: HotkeyOptions, useValue: options },
-        { provide: HotkeysService, useFactory: () => HotkeysService.create(options) },
+        HotkeysService,
       ],
     };
   }

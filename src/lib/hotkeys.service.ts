@@ -1,15 +1,16 @@
-import { Injectable, signal, WritableSignal } from '@angular/core';
+import { Injectable, inject, signal, WritableSignal } from '@angular/core';
 import { Hotkey } from './hotkey.model';
-import { IHotkeyOptions } from './hotkey.options';
+import { HotkeyOptions, IHotkeyOptions } from './hotkey.options';
 import Mousetrap, { MousetrapInstance } from 'mousetrap';
 
 /**
  * Provided by {@link provideHotkeys} or {@link HotkeyModule.forRoot}.
- * Construct via {@link HotkeysService.create} so options are applied before cheatsheet init.
  *
- * Note: construction uses `static create()` (not constructor `inject()`) because the factory
- * must apply options before cheatsheet hotkeys are registered. Components/directives use
- * `inject(HotkeysService)` for consumption.
+ * Constructed only via Angular DI (class provider) so {@link inject} can resolve
+ * {@link HotkeyOptions}. Do **not** call `new HotkeysService()` — that is outside
+ * an injection context and would break `inject()`.
+ *
+ * Consumers obtain the service with `inject(HotkeysService)` or `TestBed.inject`.
  */
 @Injectable()
 export class HotkeysService {
@@ -29,16 +30,14 @@ export class HotkeysService {
   private preventIn = ['INPUT', 'SELECT', 'TEXTAREA'];
   private options: IHotkeyOptions = {};
 
-  /** Zero-arg constructor keeps Angular DI happy (no interface tokens). Real init in create/configure. */
+  /**
+   * DI entry: `inject(HotkeyOptions)` (optional) then configure.
+   * Requires an Angular injection context — provided by class providers in
+   * {@link provideHotkeys}, {@link HotkeyModule.forRoot}, and the directive.
+   */
   constructor() {
-    // Intentionally empty — see class doc. Consumers: inject(HotkeysService).
-  }
-
-  /** Preferred construction path used by provideHotkeys / forRoot / directive. */
-  static create(options: IHotkeyOptions = {}): HotkeysService {
-    const service = new HotkeysService();
-    service.configure(options);
-    return service;
+    const injected = inject(HotkeyOptions, { optional: true });
+    this.configure(injected ?? {});
   }
 
   configure(options: IHotkeyOptions = {}): void {

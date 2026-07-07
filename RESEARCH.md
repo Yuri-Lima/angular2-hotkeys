@@ -117,10 +117,11 @@
 | :--- | :--- |
 | **Import** | `import { inject } from '@angular/core'` |
 | **What it does** | Functional DI; preferred over constructor parameter injection. |
-| **Applies?** | **YES** |
-| **Reasoning** | Directive, cheatsheet, and test-app still use constructor injection. Service keeps `static create` for options-before-init but can `inject(HotkeyOptions, { optional: true })` when constructed via DI. |
-| **Files** | `hotkeys.directive.ts`, `hotkeys-cheatsheet.component.ts`, `hotkeys.service.ts` (optional token), `test-app/src/app/app.ts` |
-| **Change** | Field initializers with `inject(...)`; drop constructor params. |
+| **Applies?** | **YES — all three library classes** |
+| **Reasoning** | Prompt required `inject()` in **HotkeysService**, **HotkeysDirective**, and **HotkeysCheatsheetComponent**. |
+| **Constraint conflict (resolved)** | An earlier attempt used `inject()` in the service while keeping `static create()` → `new HotkeysService()`. That **fails**: `inject()` requires an Angular injection context; bare `new` has none. **Resolution:** remove `static create()` / `useFactory: () => HotkeysService.create(...)`. Register `HotkeysService` as a **class provider** (with `HotkeyOptions` useValue first) so Angular constructs the service and `inject(HotkeyOptions, { optional: true })` in the service constructor works. Tests use `TestBed` + `provideHotkeys` / class providers — never `new HotkeysService()`. |
+| **Files** | `hotkeys.service.ts`, `hotkey.providers.ts`, `hotkey.module.ts`, `hotkeys.directive.ts`, `hotkeys-cheatsheet.component.ts`, specs, `test-app` |
+| **Change** | Service: `inject(HotkeyOptions)` in constructor. Directive/cheatsheet/app: `inject(HotkeysService)` (and other tokens) as fields. |
 
 ### 10. `afterRender()` / `afterNextRender()`
 

@@ -14,7 +14,7 @@ describe('HotkeysService', () => {
     TestBed.configureTestingModule({
       providers: [
         { provide: HotkeyOptions, useValue: options },
-        { provide: HotkeysService, useFactory: () => HotkeysService.create(options) },
+        HotkeysService,
       ],
     });
 

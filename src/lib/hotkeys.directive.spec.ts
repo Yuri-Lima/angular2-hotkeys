@@ -29,7 +29,7 @@ describe('HotkeysDirective', () => {
       imports: [HostComponent],
       providers: [
         { provide: HotkeyOptions, useValue: options },
-        { provide: HotkeysService, useFactory: () => HotkeysService.create(options) },
+        HotkeysService,
       ],
     }).compileComponents();
 

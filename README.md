@@ -81,7 +81,7 @@ This release goes beyond a version bump. Legacy patterns were replaced with the 
 | Before (legacy) | After (v22 line) | Where |
 | :--- | :--- | :--- |
 | `@Input()` decorator | `input()` signal input | `HotkeysDirective`, cheatsheet `title` |
-| Constructor DI | `inject()` field injection | Directive, cheatsheet, test-app |
+| Constructor / `@Inject` DI | `inject()` in **all three** classes | `HotkeysService` (`HotkeyOptions`), directive, cheatsheet; app uses `inject(HotkeysService)` |
 | Eager cheatsheet DOM | `@defer (when helpVisible())` | Cheatsheet template |
 | `effect` + plain `signal` list | `linkedSignal()` + `resource()` | Cheatsheet rows when open |
 | `ngOnInit` Mousetrap bind | `afterNextRender()` + rebind `effect` | Directive |
@@ -363,7 +363,7 @@ All public symbols are re-exported from `angular2-hotkeys`:
 | Export | Kind | Purpose |
 | :--- | :--- | :--- |
 | `provideHotkeys()` | function | Environment providers for standalone bootstrap |
-| `HotkeysService` | service | `add` / `remove` / `get` / `pause` / `unpause` / `reset`; `cheatSheetToggle` signal; `registryVersion` signal |
+| `HotkeysService` | service | DI-only (`inject(HotkeyOptions)` on construct). `add` / `remove` / `get` / `pause` / `unpause` / `reset`; `cheatSheetToggle` + `registryVersion` signals. **Do not** `new HotkeysService()` |
 | `Hotkey` | class | Combo + callback + `allowIn` + description model (**public API unchanged**) |
 | `ExtendedKeyboardEvent` | interface | Keyboard event with `returnValue` |
 | `HotkeysCheatsheetComponent` | component | Standalone help overlay (`title` signal `input()`, OnPush, `@defer`) |

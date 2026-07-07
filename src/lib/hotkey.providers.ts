@@ -5,6 +5,9 @@ import { HotkeysService } from './hotkeys.service';
 /**
  * Standalone bootstrap helper for Angular applications using `bootstrapApplication`.
  *
+ * Registers {@link HotkeyOptions} then {@link HotkeysService} as a **class provider**
+ * so the service can use `inject(HotkeyOptions)` in its constructor (injection context).
+ *
  * @example
  * ```ts
  * bootstrapApplication(AppComponent, {
@@ -15,6 +18,6 @@ import { HotkeysService } from './hotkeys.service';
 export function provideHotkeys(options: IHotkeyOptions = {}): EnvironmentProviders {
   return makeEnvironmentProviders([
     { provide: HotkeyOptions, useValue: options },
-    { provide: HotkeysService, useFactory: () => HotkeysService.create(options) },
+    HotkeysService,
   ]);
 }

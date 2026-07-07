@@ -10,6 +10,7 @@ import {
   untracked,
 } from '@angular/core';
 import { ExtendedKeyboardEvent, Hotkey } from './hotkey.model';
+import { HotkeyOptions } from './hotkey.options';
 import { HotkeysService } from './hotkeys.service';
 import Mousetrap, { MousetrapInstance } from 'mousetrap';
 
@@ -21,7 +22,11 @@ export type HotkeyBindingMap = {
 @Directive({
   selector: '[hotkeys]',
   standalone: true,
-  providers: [{ provide: HotkeysService, useFactory: () => HotkeysService.create({}) }],
+  // Class provider so HotkeysService can inject(HotkeyOptions) in an injection context.
+  providers: [
+    { provide: HotkeyOptions, useValue: {} },
+    HotkeysService,
+  ],
 })
 export class HotkeysDirective {
   /** Element-scoped hotkey bindings (signal input — replaces `@Input()`). */
