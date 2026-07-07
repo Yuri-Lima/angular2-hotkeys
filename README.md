@@ -70,7 +70,7 @@ Compiling on Angular 22 is not enough — this line **uses** Angular 22 APIs: `i
 | **Mousetrap combos** | Familiar syntax: `ctrl+s`, `meta+shift+g`, sequences, mod keys |
 | **Tree-shakeable package** | `sideEffects: false`, Ivy partial compilation via ng-packagr |
 | **Nx monorepo** | Library + real consumer app + static dashboard in one graph |
-| **Tested** | 45 unit tests (incl. dedicated **zoneless** suite), coverage ≥ **85%** |
+| **Tested** | 45 unit tests (incl. dedicated **zoneless** suite); coverage **gate ≥ 85%** (see [Quality bar](#quality-bar)) |
 
 ---
 
@@ -495,10 +495,13 @@ npx nx graph
 | Check | Expectation |
 | :--- | :--- |
 | Unit tests | **45** specs (service, directive, cheatsheet, providers, **zoneless suite**) |
-| Coverage gate | statements / lines / functions **≥ 85%** (typically ~**95%** lines) |
+| Coverage **gate** (enforced) | `karma.conf.js` → statements / lines / functions **≥ 85%**, branches **≥ 65%** (build fails if lower) |
+| Coverage **measured** (last local run) | Karma `text-summary` after `nx test angular2-hotkeys` (45 SUCCESS): **statements 94.81%** (201/212), **lines 94.55%** (191/202), **functions 97.77%** (44/45), **branches 72.3%** (47/65) |
 | Production build | `nx build angular2-hotkeys --configuration=production` clean |
 | Integration | `make prove` — Playwright `?` / `Esc` / `ctrl+s` against zoneless test-app |
 | Dashboard | `make ui` — research inventory, before/after diffs, live key demo |
+
+> **Gate vs measured:** “≥ 85%” is the **threshold in config**. The **94.81% / 94.55%** figures are the **actual** Karma report from a successful run — re-run `npx nx test angular2-hotkeys` and read the “Coverage summary” block for the current numbers. Do not treat a rounded “~95%” as the gate.
 
 ---
 

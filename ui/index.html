@@ -191,18 +191,23 @@ provideZonelessChangeDetection()
         <figure>
           <figcaption>Statements / lines / functions (global)</figcaption>
           <div class="bars" id="coverage-bars">
-            <div class="bar-row"><span>Statements</span><div class="bar"><i style="--p:95"></i></div><em>95%</em></div>
-            <div class="bar-row"><span>Lines</span><div class="bar"><i style="--p:95"></i></div><em>95%</em></div>
-            <div class="bar-row"><span>Functions</span><div class="bar"><i style="--p:98"></i></div><em>98%</em></div>
-            <div class="bar-row"><span>Branches</span><div class="bar"><i style="--p:72"></i></div><em>72%</em></div>
-            <div class="bar-row target"><span>Target</span><div class="bar"><i style="--p:85"></i></div><em>85%</em></div>
+            <div class="bar-row"><span>Statements</span><div class="bar"><i style="--p:94.81"></i></div><em>94.81%</em></div>
+            <div class="bar-row"><span>Lines</span><div class="bar"><i style="--p:94.55"></i></div><em>94.55%</em></div>
+            <div class="bar-row"><span>Functions</span><div class="bar"><i style="--p:97.77"></i></div><em>97.77%</em></div>
+            <div class="bar-row"><span>Branches</span><div class="bar"><i style="--p:72.3"></i></div><em>72.3%</em></div>
+            <div class="bar-row target"><span>Gate (stmts/lines/fns)</span><div class="bar"><i style="--p:85"></i></div><em>≥85%</em></div>
           </div>
+          <p class="section-lead" style="margin-top:0.75rem">
+            Measured from Karma <code>text-summary</code> after <code>nx test angular2-hotkeys</code>
+            (45 SUCCESS). Gate is config-enforced; percentages above are a recorded run, not the threshold.
+          </p>
         </figure>
         <figure>
           <figcaption>Before (G13) vs after (deep mod)</figcaption>
           <ul class="compare-list">
             <li><strong>Tests:</strong> 34 → <strong>45</strong> (+ zoneless suite)</li>
-            <li><strong>Coverage gate:</strong> 80% → <strong>85%</strong></li>
+            <li><strong>Coverage gate:</strong> 80% → <strong>85%</strong> (stmts/lines/fns in <code>karma.conf.js</code>)</li>
+            <li><strong>Measured (example run):</strong> 94.81% stmts · 94.55% lines · 97.77% fns · 72.3% branches</li>
             <li><strong>Legacy APIs removed:</strong> @Input, constructor DI in components/directives</li>
             <li><strong>zone.js in test-app:</strong> required → <strong>removed</strong></li>
           </ul>
