@@ -236,141 +236,166 @@ Supported key strings follow Mousetrap: [craig.is/killing/mice](https://craig.is
 
 ## Use case scenarios
 
-Common app patterns and how to implement them with this library.
+Every scenario below is implemented as a **real component** in the zoneless integration app. Run them with:
+
+```bash
+pnpm exec nx serve test-app   # http://127.0.0.1:4300/
+```
+
+| # | Scenario | Live component |
+| :--- | :--- | :--- |
+| 1 | App-wide save / undo / help | [`test-app/src/app/app.ts`](./test-app/src/app/app.ts) |
+| 2 | `allowIn` while typing | [`use-cases/composer-allow-in.component.ts`](./test-app/src/app/use-cases/composer-allow-in.component.ts) |
+| 3 | Modal `pause` / Esc only | [`use-cases/modal-pause.component.ts`](./test-app/src/app/use-cases/modal-pause.component.ts) |
+| 4 | Feature lifecycle (add/remove) | [`use-cases/feature-inbox.component.ts`](./test-app/src/app/use-cases/feature-inbox.component.ts) |
+| 5 | Command palette | [`use-cases/command-palette.component.ts`](./test-app/src/app/use-cases/command-palette.component.ts) |
+| 6 | Same combo by focus | [`use-cases/multi-panel-workspace.component.ts`](./test-app/src/app/use-cases/multi-panel-workspace.component.ts) |
+
+Shared toast / last-action log: [`action-log.service.ts`](./test-app/src/app/action-log.service.ts).
 
 ### 1. App-wide save / undo / open help
 
-Register once at the root (or a shell layout) with `HotkeysService`. Good for actions that should work almost everywhere.
+**Source:** `test-app/src/app/app.ts` — registers on the root `HotkeysService` once.
 
 ```ts
-private readonly hotkeys = inject(HotkeysService);
-private readonly documents = inject(DocumentStore);
-
-ngOnInit(): void {
-  this.hotkeys.add([
-    new Hotkey('mod+s', () => {
-      this.documents.saveActive();
+// test-app/src/app/app.ts (excerpt)
+this.hotkeys.add(
+  new Hotkey(
+    'ctrl+s',
+    () => {
+      this.log.log('ctrl+s → Save (app-wide)');
       return false; // prevent browser “Save page”
-    }, undefined, 'Save document'),
+    },
+    ['INPUT', 'TEXTAREA'],
+    'Save document (app-wide)',
+  ),
+);
 
-    new Hotkey('mod+z', () => {
-      this.documents.undo();
+this.hotkeys.add(
+  new Hotkey(
+    'ctrl+z',
+    () => {
+      this.log.log('ctrl+z → Undo (app-wide)');
       return false;
-    }, undefined, 'Undo'),
-
-    // Already registered by provideHotkeys unless disableCheatSheet: true
-    // new Hotkey('?', ...)
-  ]);
-}
+    },
+    [],
+    'Undo last change (app-wide)',
+  ),
+);
+// '?' comes from provideHotkeys() unless disableCheatSheet: true
 ```
 
-Use `mod+` instead of `ctrl+` / `command+` when you want the platform “primary” modifier (Ctrl on Windows/Linux, ⌘ on macOS).
+Prefer `mod+` instead of `ctrl+` / `command+` when you want the platform primary modifier; the demo uses `ctrl+` so Playwright proofs stay OS-stable.
 
 ### 2. Allow a shortcut while typing in an input
 
-By default, global combos are **suppressed** in `INPUT`, `SELECT`, and `TEXTAREA` so typing is not hijacked. Opt a combo back in with `allowIn`:
+**Source:** `ComposerAllowInComponent` — `Ctrl+Enter` sends while the caret is in the textarea.
+
+By default, global combos are **suppressed** in `INPUT`, `SELECT`, and `TEXTAREA`. Opt a combo back in with `allowIn`:
 
 ```ts
-this.hotkeys.add(
+// test-app/src/app/use-cases/composer-allow-in.component.ts (excerpt)
+this.binding = this.hotkeys.add(
   new Hotkey(
-    'mod+enter',
+    'ctrl+enter',
     () => {
-      this.submitComposer();
+      this.lastSend.set(this.draft().trim() || '(empty)');
+      this.log.log(`ctrl+enter → send …`);
       return false;
     },
-    ['INPUT', 'TEXTAREA'], // 3rd arg — fire even while focused in these tags
-    'Send message',
+    ['TEXTAREA', 'INPUT'], // fire even while focused in form fields
+    'Send composer message (works in inputs)',
   ),
-);
+) as Hotkey;
 ```
 
-Also works for custom tags if you pass their `nodeName` (e.g. cheatsheet uses `HOTKEYS-CHEATSHEET` for Esc close).
+Also works for custom tags via `nodeName` (e.g. cheatsheet uses `HOTKEYS-CHEATSHEET` for Esc close).
 
 ### 3. Modal / drawer: close with `Esc`, pause the rest
 
-While a modal is open you often want **only** Esc (or a small set) active:
+**Source:** `ModalPauseComponent` — Open dialog button on the demo page.
 
 ```ts
-private readonly hotkeys = inject(HotkeysService);
-private modalKeys: Hotkey[] = [];
-
-openModal(): void {
+// test-app/src/app/use-cases/modal-pause.component.ts (excerpt)
+open(): void {
   this.hotkeys.pause(); // stash all current global bindings
   this.modalKeys = this.hotkeys.add(
     new Hotkey('esc', () => {
-      this.closeModal();
+      this.close();
       return false;
-    }, undefined, 'Close dialog'),
+    }, undefined, 'Close demo dialog'),
   ) as Hotkey[];
+  this.openState.set(true);
 }
 
-closeModal(): void {
+close(): void {
   this.hotkeys.remove(this.modalKeys);
   this.hotkeys.unpause(); // restore what was active before the modal
+  this.openState.set(false);
 }
 ```
 
 ### 4. Route- or feature-specific shortcuts
 
-Add on activate, remove on destroy so leaving the page does not leave “ghost” handlers:
+**Source:** `FeatureInboxComponent` — mounted with `@if (showInbox())` from the shell; **Unmount inbox feature** removes `j` / `k` / `e`.
 
 ```ts
-export class InboxPage implements OnInit, OnDestroy {
-  private readonly hotkeys = inject(HotkeysService);
-  private bindings: Hotkey[] = [];
+// test-app/src/app/use-cases/feature-inbox.component.ts (excerpt)
+ngOnInit(): void {
+  this.bindings = this.hotkeys.add([
+    new Hotkey('j', () => { this.next(); return false; }, undefined, 'Inbox: next thread'),
+    new Hotkey('k', () => { this.prev(); return false; }, undefined, 'Inbox: previous thread'),
+    new Hotkey('e', () => { this.archive(); return false; }, undefined, 'Inbox: archive thread'),
+  ]) as Hotkey[];
+}
 
-  ngOnInit(): void {
-    this.bindings = this.hotkeys.add([
-      new Hotkey('j', () => (this.next(), false), undefined, 'Next thread'),
-      new Hotkey('k', () => (this.prev(), false), undefined, 'Previous thread'),
-      new Hotkey('e', () => (this.archive(), false), undefined, 'Archive'),
-    ]) as Hotkey[];
-  }
-
-  ngOnDestroy(): void {
-    this.hotkeys.remove(this.bindings);
-  }
+ngOnDestroy(): void {
+  this.hotkeys.remove(this.bindings); // no ghost handlers after unmount
 }
 ```
 
-For combos that must survive navigation, pass `persistent: true` as the last `Hotkey` constructor argument (6th param) when your app’s routing layer uses that flag.
-
 ### 5. Command palette / “go to”
 
+**Source:** `CommandPaletteComponent` — `Ctrl+K` opens; while open, globals are `pause()`d and `Esc` closes.
+
 ```ts
-this.hotkeys.add(
-  new Hotkey('mod+k', () => {
-    this.paletteOpen.set(true);
+// test-app/src/app/use-cases/command-palette.component.ts (excerpt)
+this.openBinding = this.hotkeys.add(
+  new Hotkey('ctrl+k', () => {
+    this.openState() ? this.close() : this.open();
     return false;
-  }, undefined, 'Open command palette'),
-);
+  }, undefined, 'Toggle command palette'),
+) as Hotkey;
 ```
 
-Prefer a **signal** for `paletteOpen` so zoneless hosts still re-render.
+UI state is a **signal** (`openState`) so zoneless hosts re-render without Zone.
 
-### 6. Multi-panel UI (list + detail + editor)
+### 6. Multi-panel UI (list + editor) — same combo, focus decides
 
-Same physical keys, different meaning per panel — see the next section. Typical layout:
+**Source:** `MultiPanelWorkspaceComponent` — click a panel, then `Ctrl+S`.
 
-| Focus | `mod+s` | `Delete` / `Backspace` |
+| Focus | `Ctrl+S` | Other |
 | :--- | :--- | :--- |
-| Document list | — (or “save all”) | Delete selected row |
-| Rich-text editor | Save document | Delete selection / character |
-| Preview iframe | ignored / browser default | ignored |
+| File list panel | Export selection | `Del` → delete selection |
+| Editor panel | Save document | `Esc` → blur panel |
+| Neither (app shell) | App-wide Save from `app.ts` | — |
 
-Use **element-scoped** `[hotkeys]` on each panel (recommended), or one global handler that branches on `document.activeElement` / a focus service.
+Bindings are applied **only while the panel is focused** (`computed` → `[hotkeys]`), so the app-wide handler returns when both panels blur. Full pattern notes: [Same shortcut, different actions by focus](#same-shortcut-different-actions-by-focus).
 
-### 7. Integration demo (`test-app/`)
+### 7. Try the full matrix
 
-The zoneless demo exercises:
+| Combo | Where | Expected last-action log |
+| :--- | :--- | :--- |
+| `?` / `Esc` | Anywhere (cheatsheet not paused) | Toggle / close cheatsheet |
+| `Ctrl+S` | App shell (no panel focused) | `Save (app-wide)` |
+| `Ctrl+Z` | App shell (not in an input) | `Undo (app-wide)` |
+| `Ctrl+Enter` | Focus composer textarea | `send “…” (allowIn TEXTAREA)` |
+| `Ctrl+K` | App shell | Command palette open |
+| `J` / `K` / `E` | Inbox mounted | Next / previous / archive |
+| `Ctrl+S` | Focus file list | `export selection` |
+| `Ctrl+S` | Focus editor | `save document` |
 
-| Combo | Action |
-| :--- | :--- |
-| `?` | Toggle cheatsheet |
-| `Esc` | Close cheatsheet (`cheatSheetCloseEsc: true`) |
-| `ctrl+s` / `ctrl+z` | Demo “save” / “undo” feedback via signals |
-
-Run: `pnpm exec nx serve test-app` → `http://127.0.0.1:4300/`.
+Browser smoke proof (cheatsheet + app-wide save): `make prove` with the app on port **4300**.
 
 ---
 
@@ -399,106 +424,38 @@ Apps often need **one combo** (e.g. `mod+s`, `Esc`, `Delete`) to mean different 
 
 ### Pattern A — Element-scoped override (recommended)
 
-`HotkeysDirective` binds Mousetrap **to the host element**. While the directive is alive it also **temporarily removes** any **global** binding for the same combo and restores it on destroy. Result:
+**Live demo:** [`multi-panel-workspace.component.ts`](./test-app/src/app/use-cases/multi-panel-workspace.component.ts).
 
-1. Focus **inside** the host → local handler runs.
-2. Host destroyed / unbound → previous global handler (if any) is restored.
-3. Focus **outside** the host while the host is still mounted → the global combo for that key is **not** active (it was stashed); only hosts with their own binding for that key respond when focused.
+`HotkeysDirective` binds Mousetrap **to the host element**. While a local combo is bound it also **temporarily removes** any **global** binding for the same combo (app-wide `HotkeysService`) and restores it when the local list is cleared or the host is destroyed.
 
-Make the host focusable (`tabindex="0"`) if it is not a natural focus target (plain `div`).
+The demo applies bindings **only while focused** (`computed` empty array when blurred) so app-wide `Ctrl+S` returns when no panel owns focus:
 
 ```ts
-// editor-panel.component.ts
-import { Component } from '@angular/core';
-import { HotkeysDirective } from 'angular2-hotkeys';
+// test-app/src/app/use-cases/multi-panel-workspace.component.ts (excerpt)
+readonly listHotkeys = computed<HotkeyBindingMap[]>(() =>
+  this.focused() === 'list'
+    ? [{ 'ctrl+s': () => { this.exportSelection(); return false; } }, /* del … */]
+    : [],
+);
 
-@Component({
-  selector: 'app-editor-panel',
-  standalone: true,
-  imports: [HotkeysDirective],
-  template: `
-    <section
-      class="panel"
-      tabindex="0"
-      [hotkeys]="editorHotkeys"
-      (focus)="onFocus()"
-    >
-      <h2>Editor</h2>
-      <!-- editor UI -->
-    </section>
-  `,
-})
-export class EditorPanelComponent {
-  /** Signal-input friendly array of combo → handler maps */
-  readonly editorHotkeys = [
-    {
-      'mod+s': () => {
-        this.saveDocument();
-        return false;
-      },
-    },
-    {
-      esc: () => {
-        this.blurEditor();
-        return false;
-      },
-    },
-  ];
-
-  saveDocument(): void { /* ... */ }
-  blurEditor(): void { /* ... */ }
-  onFocus(): void { /* optional analytics */ }
-}
-```
-
-```ts
-// file-list.component.ts — same mod+s, different action
-@Component({
-  selector: 'app-file-list',
-  standalone: true,
-  imports: [HotkeysDirective],
-  template: `
-    <section class="panel" tabindex="0" [hotkeys]="listHotkeys">
-      <h2>Files</h2>
-      <!-- list UI -->
-    </section>
-  `,
-})
-export class FileListComponent {
-  readonly listHotkeys = [
-    {
-      'mod+s': () => {
-        this.exportSelection();
-        return false;
-      },
-    },
-    {
-      del: () => {
-        this.deleteSelection();
-        return false;
-      },
-    },
-  ];
-
-  exportSelection(): void { /* ... */ }
-  deleteSelection(): void { /* ... */ }
-}
+readonly editorHotkeys = computed<HotkeyBindingMap[]>(() =>
+  this.focused() === 'editor'
+    ? [{ 'ctrl+s': () => { this.saveDocument(); return false; } }, /* esc … */]
+    : [],
+);
 ```
 
 ```html
-<!-- parent layout: both panels mounted; focus decides which mod+s runs -->
-<div class="workspace">
-  <app-file-list />
-  <app-editor-panel />
-</div>
+<section tabindex="0" [hotkeys]="listHotkeys()" (focusin)="focused.set('list')">…</section>
+<section tabindex="0" [hotkeys]="editorHotkeys()" (focusin)="focused.set('editor')">…</section>
 ```
 
 **Tips for multi-panel UIs**
 
-- Give each panel a visible focus style (`:focus-visible`) so users know which set of shortcuts is active.
+- Give each panel a visible focus style so users know which set of shortcuts is active.
 - Prefer **click-to-focus** on the panel container (`tabindex="0"`) so mouse users enter the right scope.
-- Keep descriptions only on the global “default” combos if you do not want duplicate rows in the cheatsheet for every panel override.
-- Nested `[hotkeys]` hosts: the element that actually has focus (or its Mousetrap host) wins for element-bound listeners.
+- Prefer **focus-gated** `[hotkeys]` (empty when blurred) if you still want an app-wide fallback for the same combo.
+- Keep descriptions only on the global “default” combos if you do not want duplicate cheatsheet rows for every panel override.
 
 ### Pattern B — One global handler, branch on focus / state
 

@@ -7,32 +7,53 @@
 }
 
 .wrap {
-  max-width: 720px;
+  max-width: 920px;
   margin: 0 auto;
-  padding: 3rem 1.5rem;
+  padding: 2.5rem 1.5rem 4rem;
+  display: grid;
+  gap: 1rem;
 }
 
 h1 {
   margin: 0 0 0.5rem;
-  font-size: 1.8rem;
+  font-size: 1.75rem;
 }
 
 .lead {
   color: #9fb0c7;
   line-height: 1.5;
+  margin: 0 0 0.5rem;
+}
+
+.meta {
+  margin: 0;
+  color: #cbd5e1;
+  font-size: 0.95rem;
 }
 
 .card {
-  margin-top: 2rem;
-  padding: 1.25rem 1.5rem;
+  padding: 1.15rem 1.35rem;
   border: 1px solid #2a3b55;
   border-radius: 12px;
   background: rgba(255, 255, 255, 0.03);
 }
 
-ul {
-  line-height: 1.9;
+.card h2 {
+  margin: 0 0 0.4rem;
+  font-size: 1.1rem;
+}
+
+.card-lead {
+  margin: 0 0 0.65rem;
+  color: #9fb0c7;
+  font-size: 0.92rem;
+  line-height: 1.45;
+}
+
+.overview ul {
+  line-height: 1.85;
   padding-left: 1.2rem;
+  margin: 0;
 }
 
 kbd {
@@ -55,9 +76,40 @@ kbd {
   color: #052e16;
   font-weight: 600;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
-  z-index: 50;
+  z-index: 90;
+  max-width: min(420px, 90vw);
 }
 
 code {
   color: #7dd3fc;
+}
+
+.inbox-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.85rem;
+}
+
+.inbox-toolbar .btn {
+  border: 0;
+  border-radius: 8px;
+  padding: 0.45rem 0.85rem;
+  background: #fbbf24;
+  color: #422006;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.inbox-toolbar .hint,
+.muted {
+  color: #9fb0c7;
+  font-size: 0.88rem;
+  margin: 0;
+}
+
+.defer-placeholder {
+  color: #64748b;
+  font-size: 0.85rem;
 }

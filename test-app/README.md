@@ -12,9 +12,15 @@ This project consumes the library as a real dependency (`"angular2-hotkeys": "fi
 
 | Feature | Where |
 | :--- | :--- |
-| `provideHotkeys()` | [`src/app/app.config.ts`](./src/app/app.config.ts) |
-| Standalone cheatsheet | [`src/app/app.ts`](./src/app/app.ts) + template |
-| Demo shortcuts | `?` · `Esc` · `ctrl+s` · `ctrl+z` |
+| `provideHotkeys()` + zoneless | [`src/app/app.config.ts`](./src/app/app.config.ts) |
+| **1** App-wide save / undo / help | [`src/app/app.ts`](./src/app/app.ts) — `ctrl+s` · `ctrl+z` · `?` · `Esc` |
+| **2** `allowIn` while typing | [`use-cases/composer-allow-in.component.ts`](./src/app/use-cases/composer-allow-in.component.ts) — `ctrl+enter` |
+| **3** Modal `pause` / Esc only | [`use-cases/modal-pause.component.ts`](./src/app/use-cases/modal-pause.component.ts) |
+| **4** Feature lifecycle j/k/e | [`use-cases/feature-inbox.component.ts`](./src/app/use-cases/feature-inbox.component.ts) (mount toggle in shell) |
+| **5** Command palette | [`use-cases/command-palette.component.ts`](./src/app/use-cases/command-palette.component.ts) — `ctrl+k` |
+| **6** Same combo by focus | [`use-cases/multi-panel-workspace.component.ts`](./src/app/use-cases/multi-panel-workspace.component.ts) — panel `ctrl+s` |
+| Shared action log | [`src/app/action-log.service.ts`](./src/app/action-log.service.ts) |
+| Cheatsheet `@defer` | shell template + library overlay |
 
 ## Stack
 

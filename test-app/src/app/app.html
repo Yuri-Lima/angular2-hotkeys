@@ -2,31 +2,64 @@
   <header>
     <h1>{{ title() }}</h1>
     <p class="lead">
-      Integration proof that <code>angular2-hotkeys</code> works as a consumed dependency via
-      <code>provideHotkeys()</code> with <strong>zoneless</strong> change detection
-      (<code>provideZonelessChangeDetection()</code>, no <code>zone.js</code>).
+      Live demos for every README use case. Consumes
+      <code>angular2-hotkeys</code> via <code>provideHotkeys()</code> with
+      <strong>zoneless</strong> change detection (no <code>zone.js</code>).
     </p>
     <p class="meta">
       Mode: <strong id="cd-mode">{{ zoneless() ? 'zoneless' : 'zone' }}</strong>
+      · Last action:
+      <strong id="last-action">{{ log.lastAction() }}</strong>
     </p>
   </header>
 
-  <section class="card">
-    <h2>Registered shortcuts</h2>
+  <section class="card overview">
+    <h2>1 · App-wide save / undo / help</h2>
+    <p class="card-lead">
+      Registered in <code>app.ts</code> on the root <code>HotkeysService</code>.
+    </p>
     <ul>
-      <li><kbd>?</kbd> — open / close the cheatsheet overlay (lazy via <code>&#64;defer</code>)</li>
-      <li><kbd>Esc</kbd> — close the cheatsheet</li>
-      <li><kbd>Ctrl</kbd> + <kbd>S</kbd> — Save (shows toast)</li>
-      <li><kbd>Ctrl</kbd> + <kbd>Z</kbd> — Undo (shows toast)</li>
+      <li><kbd>?</kbd> — open / close the cheatsheet (<code>&#64;defer</code> + library overlay defer)</li>
+      <li><kbd>Esc</kbd> — close the cheatsheet (<code>cheatSheetCloseEsc</code>)</li>
+      <li><kbd>Ctrl</kbd>+<kbd>S</kbd> — Save (app-wide; also allowed in inputs)</li>
+      <li><kbd>Ctrl</kbd>+<kbd>Z</kbd> — Undo (suppressed while typing in inputs)</li>
     </ul>
-    <p>Last action: <strong id="last-action">{{ lastAction() }}</strong></p>
   </section>
 
-  @if (toast(); as msg) {
+  <section class="card">
+    <app-composer-allow-in />
+  </section>
+
+  <section class="card">
+    <app-modal-pause />
+  </section>
+
+  <section class="card">
+    <div class="inbox-toolbar">
+      <button type="button" id="toggle-inbox" class="btn" (click)="toggleInbox()">
+        {{ showInbox() ? 'Unmount' : 'Mount' }} inbox feature
+      </button>
+      <span class="hint">Proves add-on-init / remove-on-destroy for j · k · e</span>
+    </div>
+    @if (showInbox()) {
+      <app-feature-inbox />
+    } @else {
+      <p class="muted" id="inbox-unmounted">Inbox unmounted — <kbd>J</kbd>/<kbd>K</kbd>/<kbd>E</kbd> should not run.</p>
+    }
+  </section>
+
+  <section class="card">
+    <app-command-palette />
+  </section>
+
+  <section class="card">
+    <app-multi-panel-workspace />
+  </section>
+
+  @if (log.toast(); as msg) {
     <div class="toast" role="status" aria-live="polite">{{ msg }}</div>
   }
 
-  <!-- Defer cheatsheet until idle; library also defers overlay body when opened -->
   @defer (on idle) {
     <hotkeys-cheatsheet title="Keyboard Shortcuts:" />
   } @placeholder {

@@ -61,12 +61,15 @@ describe('HotkeysDirective', () => {
     expect(dir.hotkeys().length).toBe(1);
   });
 
-  it('should stash and restore previously registered hotkeys on destroy', () => {
+  it('should stash and restore previously registered global hotkeys on destroy', async () => {
     const dirEl = fixture.debugElement.query(By.directive(HotkeysDirective));
     const dir = dirEl.injector.get(HotkeysDirective);
-    expect((dir as any).oldHotkeys.length).toBeGreaterThanOrEqual(0);
+    // Global ctrl+k was registered in beforeEach; directive should have stashed it.
+    expect((dir as any).oldHotkeys.length).toBe(1);
+    expect(service.get('ctrl+k')).toBeNull();
     fixture.destroy();
-    expect(service).toBeTruthy();
+    // Restored on the app-wide service
+    expect(service.get('ctrl+k')).toBeTruthy();
   });
 
   it('should unbind element hotkeys on destroy', () => {
