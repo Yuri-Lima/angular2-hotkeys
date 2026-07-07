@@ -225,7 +225,7 @@
 | 9 | `inject()` | YES | directive, cheatsheet, app, service options |
 | 10 | `afterNextRender()` | YES | directive |
 | 11 | `@defer` | YES | cheatsheet HTML, test-app |
-| 12 | RxJS interop suite | NO (core) | — |
+| 12 | RxJS interop suite | NO (core) | — (rxjs remains a **peer only**; see README “Why is rxjs in package.json?”) |
 | 13 | OnPush explicit | YES | cheatsheet (+ signal-driven CD) |
 | 14 | `@Service` / `injectAsync` | NO (compat) | README only |
 | 15 | Signal Forms / Aria / debounced / router | NO | — |

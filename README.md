@@ -99,10 +99,22 @@ Full inventory: [`RESEARCH.md`](./RESEARCH.md). Interactive summary: [`ui/`](./u
 | Tool | Version |
 | :--- | :--- |
 | **Angular** | `>=20.0.0 <23.0.0` (developed & tested on **22**) |
-| **RxJS** | `^7.0.0` |
+| **RxJS** | `^7.0.0` as a **peer only** (see below) |
 | **Node.js** | `^22.22.3` or `^24.15.0` or `>=26` |
 | **TypeScript** (apps) | `~6.0` recommended |
 | **zone.js** | **Optional** — not required for this library |
+
+#### Why is `rxjs` in `package.json`?
+
+The library **does not import or use RxJS** in its runtime source (no `Observable`, `Subject`, `async` pipe, or `@angular/core/rxjs-interop`). Cheatsheet visibility and UI updates use **signals** (`cheatSheetToggle`, `linkedSignal`, `resource`) instead of the older `BehaviorSubject` pattern.
+
+`rxjs` is still listed under **`peerDependencies`** (`^7.0.0`) because:
+
+1. **Angular ecosystem convention** — most Angular apps already depend on RxJS; declaring the same peer avoids duplicate installs and matches the usual Angular peer set.
+2. **Host compatibility** — consumers and package managers expect the standard `@angular/*` + `rxjs` peer graph; omitting it can produce surprising resolution warnings even when this package never calls RxJS.
+3. **Tooling** — CLI / test / build stacks commonly pull RxJS transitively; the peer documents the supported major for hosts that share one copy.
+
+You do **not** need to write RxJS code to use this library. If your app is fully signal-based, you still typically have `rxjs` installed for Angular itself.
 
 > Older library lines target older Angular majors — see [Compatibility & migration](#compatibility--migration).
 
@@ -120,7 +132,7 @@ Ensure peers are present (most Angular apps already have them):
 npm install @angular/core@^22 @angular/common@^22 rxjs@^7
 ```
 
-You do **not** need `zone.js` if your app uses zoneless change detection.
+`rxjs` is a **peer dependency only** — this package does not use Observables internally (see [Why is `rxjs` in `package.json`?](#why-is-rxjs-in-packagejson)). You do **not** need `zone.js` if your app uses zoneless change detection.
 
 ---
 
