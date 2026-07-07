@@ -29,14 +29,14 @@ Compiling on Angular 22 is not enough — this line **uses** Angular 22 APIs: `i
 | **Runtime** | Node `^22.22.3 \|\| ^24.15.0 \|\| >=26` · see [`.nvmrc`](.nvmrc) |
 | **Package manager** | **pnpm** only (`packageManager` in `package.json` · [`pnpm-lock.yaml`](./pnpm-lock.yaml) · [`pnpm-workspace.yaml`](./pnpm-workspace.yaml)) |
 | **zone.js** | **Not required** — library UI is signal-driven |
-| **Demo** | [`test-app/`](./test-app) · zoneless · `pnpm exec nx serve test-app` (or `pnpm start`) → `http://127.0.0.1:4300/` |
+| **Demo** | [`test-app/`](./test-app) · **6 live use cases** · zoneless · `pnpm start` → `http://127.0.0.1:4300/` |
 | **Dashboard** | [`ui/`](./ui) · `make ui` → `http://localhost:8765/` |
 | **Research** | [`RESEARCH.md`](./RESEARCH.md) — 17 Angular 21/22 APIs evaluated |
 
 <p align="center">
-  <img src="./ui/proof-test-app.png" alt="Demo test-app with cheatsheet and shortcut feedback" width="720" />
+  <img src="./ui/proof-test-app.png" alt="Demo test-app with use-case panels and shortcut feedback" width="720" />
   <br />
-  <sub>Zoneless integration demo — <code>?</code> / <code>Esc</code> / <code>ctrl+s</code> without <code>zone.js</code></sub>
+  <sub>Zoneless demo — app-wide shortcuts, allowIn, modal pause, feature lifecycle, command palette, focus-scoped panels (no <code>zone.js</code>)</sub>
 </p>
 
 ---
@@ -73,8 +73,8 @@ Compiling on Angular 22 is not enough — this line **uses** Angular 22 APIs: `i
 | **Built-in help UI** | `<hotkeys-cheatsheet>` overlay; toggle with `?`; overlay body deferred until first open |
 | **Mousetrap combos** | Familiar syntax: `ctrl+s`, `meta+shift+g`, sequences, mod keys |
 | **Tree-shakeable package** | `sideEffects: false`, Ivy partial compilation via ng-packagr |
-| **Nx monorepo** | Library + real consumer app + static dashboard in one graph |
-| **Tested** | 45 unit tests (incl. dedicated **zoneless** suite); coverage **gate ≥ 85%** (see [Quality bar](#quality-bar)) |
+| **Nx monorepo** | Library + real consumer app (6 use-case components) + static dashboard |
+| **Tested** | 45 library unit tests (incl. **zoneless** suite) + test-app shell specs; coverage **gate ≥ 85%** (see [Quality bar](#quality-bar)) |
 
 ---
 
@@ -236,10 +236,12 @@ Supported key strings follow Mousetrap: [craig.is/killing/mice](https://craig.is
 
 ## Use case scenarios
 
-Every scenario below is implemented as a **real component** in the zoneless integration app. Run them with:
+Every scenario below is implemented as a **real component** in the zoneless integration app ([`test-app/src/app/use-cases/`](./test-app/src/app/use-cases/)). Run and click through them with:
 
 ```bash
-pnpm exec nx serve test-app   # http://127.0.0.1:4300/
+pnpm start                    # or: pnpm exec nx serve test-app
+# → http://127.0.0.1:4300/  (watch “Last action” + toast for feedback)
+# optional dashboard: make ui → http://localhost:8765/
 ```
 
 | # | Scenario | Live component |
@@ -413,11 +415,11 @@ Apps often need **one combo** (e.g. `mod+s`, `Esc`, `Delete`) to mean different 
 
 ```text
 ┌─────────────────────────────────────────────┐
-│  App shell — global mod+s = “Save all”      │
+│  App shell — global Ctrl+S = “Save (app)”   │
 │  ┌──────────────────┐  ┌─────────────────┐  │
 │  │ [hotkeys] list   │  │ [hotkeys] editor│  │
-│  │ mod+s → export   │  │ mod+s → save    │  │
-│  │ del  → remove    │  │ del  → (edit)   │  │
+│  │ Ctrl+S → export  │  │ Ctrl+S → save   │  │
+│  │ Del → remove     │  │ Esc → blur      │  │
 │  └──────────────────┘  └─────────────────┘  │
 └─────────────────────────────────────────────┘
 ```
@@ -648,11 +650,11 @@ export class EditorComponent {
 **How it works**
 
 1. Mousetrap is created on the **host element** in **`afterNextRender()`** (SSR/hydration-friendly).
-2. For each local combo, any **global** `HotkeysService` binding with the same combo is **removed and stashed**.
+2. For each local combo, any **global** binding on the **app-wide** `HotkeysService` (from `provideHotkeys`) with the same combo is **removed and stashed**.
 3. An `effect` rebinds when the `hotkeys` signal input changes after the view is ready.
-4. On destroy (or rebind), local keys unbind and stashed **globals are restored**.
+4. On destroy (or when the input becomes `[]`), local keys unbind and stashed **globals are restored**.
 
-Import `HotkeysDirective` on the standalone component that owns the host. The directive provides its own `HotkeysService` instance for bookkeeping of stashed globals against the app-wide registry.
+Import `HotkeysDirective` on the standalone component that owns the host. The host app must provide `HotkeysService` via `provideHotkeys()` / `HotkeyModule.forRoot()` — the directive does **not** create a private service instance.
 
 ---
 
@@ -830,12 +832,12 @@ pnpm exec nx graph                 # or: make graph | pnpm run graph
 | :--- | :--- |
 | Unit tests | **45** specs (service, directive, cheatsheet, providers, **zoneless suite**) |
 | Coverage **gate** (enforced) | `karma.conf.js` → statements / lines / functions **≥ 85%**, branches **≥ 65%** (build fails if lower) |
-| Coverage **measured** (last local run) | Karma `text-summary` after `pnpm exec nx test angular2-hotkeys` (45 SUCCESS): **statements 94.71%** (197/208), **lines 94.44%** (187/198), **functions 97.56%** (40/41), **branches 72.72%** (48/66) |
+| Coverage **measured** (last local run) | Karma `text-summary` after `pnpm exec nx test angular2-hotkeys` (45 SUCCESS): **statements 96.63%** (201/208), **lines 96.46%** (191/198), **functions 97.56%** (40/41), **branches 75.75%** (50/66) |
 | Production build | `pnpm exec nx build angular2-hotkeys --configuration=production` clean |
-| Integration | `make prove` / `pnpm run prove` — Playwright `?` / `Esc` / `ctrl+s` against zoneless test-app on **:4300** |
+| Integration | Live use cases on **:4300**; `make prove` / `pnpm run prove` — Playwright `?` / `Esc` / `ctrl+s` |
 | Dashboard | `make ui` — research inventory, before/after diffs, live key demo on **:8765** |
 
-> **Gate vs measured:** “≥ 85%” is the **threshold in config**. The **94.71% / 94.44%** figures are the **actual** Karma report from a successful run — re-run `pnpm exec nx test angular2-hotkeys` and read the “Coverage summary” block for the current numbers. Do not treat a rounded “~95%” as the gate.
+> **Gate vs measured:** “≥ 85%” is the **threshold in config**. The **96.63% / 96.46%** figures are the **actual** Karma report from a successful run — re-run `pnpm exec nx test angular2-hotkeys` and read the “Coverage summary” block for the current numbers. Do not treat a rounded “~95%” as the gate.
 
 ---
 
