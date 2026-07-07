@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { HotkeysDirective } from './hotkeys.directive';
@@ -9,14 +9,14 @@ import { Hotkey } from './hotkey.model';
 @Component({
   standalone: true,
   imports: [HotkeysDirective],
-  template: `<div [hotkeys]="bindings" id="host"></div>`,
+  template: `<div [hotkeys]="bindings()" id="host"></div>`,
 })
 class HostComponent {
-  bindings = [
+  bindings = signal<{ [combo: string]: (event: KeyboardEvent, combo: string) => boolean }[]>([
     {
       'ctrl+k': () => false,
     },
-  ];
+  ]);
 }
 
 describe('HotkeysDirective', () => {
@@ -30,7 +30,6 @@ describe('HotkeysDirective', () => {
       providers: [
         { provide: HotkeyOptions, useValue: options },
         { provide: HotkeysService, useFactory: () => HotkeysService.create(options) },
-
       ],
     }).compileComponents();
 
@@ -40,6 +39,9 @@ describe('HotkeysDirective', () => {
 
     fixture = TestBed.createComponent(HostComponent);
     fixture.detectChanges();
+    // afterNextRender + effect rebind
+    await fixture.whenStable();
+    fixture.detectChanges();
   });
 
   it('should create the host with the directive', () => {
@@ -48,21 +50,22 @@ describe('HotkeysDirective', () => {
     expect(dir.injector.get(HotkeysDirective)).toBeTruthy();
   });
 
-  it('should bind element-scoped hotkeys on init', () => {
+  it('should bind element-scoped hotkeys after render via signal input()', async () => {
     const dir = fixture.debugElement.query(By.directive(HotkeysDirective)).injector.get(
       HotkeysDirective,
     );
     expect((dir as any).hotkeysList.length).toBe(1);
     expect((dir as any).mousetrap).toBeTruthy();
+    // signal input is a function
+    expect(typeof dir.hotkeys).toBe('function');
+    expect(dir.hotkeys().length).toBe(1);
   });
 
   it('should stash and restore previously registered hotkeys on destroy', () => {
     const dirEl = fixture.debugElement.query(By.directive(HotkeysDirective));
     const dir = dirEl.injector.get(HotkeysDirective);
-    // Old global was stashed because combo matched
     expect((dir as any).oldHotkeys.length).toBeGreaterThanOrEqual(0);
     fixture.destroy();
-    // After destroy, service should still be usable
     expect(service).toBeTruthy();
   });
 
@@ -71,8 +74,24 @@ describe('HotkeysDirective', () => {
       HotkeysDirective,
     );
     const mousetrap = (dir as any).mousetrap;
+    expect(mousetrap).toBeTruthy();
     spyOn(mousetrap, 'unbind').and.callThrough();
     fixture.destroy();
     expect(mousetrap.unbind).toHaveBeenCalled();
+  });
+
+  it('should rebind when signal input changes', async () => {
+    const host = fixture.componentInstance;
+    host.bindings.set([{ 'ctrl+l': () => false }]);
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+    const dir = fixture.debugElement.query(By.directive(HotkeysDirective)).injector.get(
+      HotkeysDirective,
+    );
+    expect((dir as any).hotkeysList.length).toBe(1);
+    const combo = (dir as any).hotkeysList[0].combo as string | string[];
+    const comboStr = Array.isArray(combo) ? combo.join(',') : combo;
+    expect(comboStr).toContain('ctrl+l');
   });
 });

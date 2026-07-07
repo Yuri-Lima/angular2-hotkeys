@@ -271,5 +271,14 @@ describe('HotkeysService', () => {
     const orphan = new Hotkey('alt+8', () => false, [], 'Missing');
     expect(service.remove(orphan)).toBeNull();
   });
+
+  it('should bump registryVersion on add/remove for linkedSignal consumers', () => {
+    const v0 = service.registryVersion();
+    service.add(new Hotkey('alt+a', () => false, [], 'A'));
+    expect(service.registryVersion()).toBeGreaterThan(v0);
+    const v1 = service.registryVersion();
+    service.remove(service.get('alt+a') as Hotkey);
+    expect(service.registryVersion()).toBeGreaterThan(v1);
+  });
 });
 

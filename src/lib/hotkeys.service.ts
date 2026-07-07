@@ -6,21 +6,32 @@ import Mousetrap, { MousetrapInstance } from 'mousetrap';
 /**
  * Provided by {@link provideHotkeys} or {@link HotkeyModule.forRoot}.
  * Construct via {@link HotkeysService.create} so options are applied before cheatsheet init.
+ *
+ * Note: construction uses `static create()` (not constructor `inject()`) because the factory
+ * must apply options before cheatsheet hotkeys are registered. Components/directives use
+ * `inject(HotkeysService)` for consumption.
  */
 @Injectable()
 export class HotkeysService {
+  /** Public array of active hotkeys (mutable API preserved for consumers). */
   hotkeys: Hotkey[] = [];
   pausedHotkeys: Hotkey[] = [];
   mousetrap!: MousetrapInstance;
   /** Writable signal that drives the cheatsheet open/closed state (replaces RxJS Subject). */
   cheatSheetToggle: WritableSignal<boolean> = signal(false);
 
+  /**
+   * Increments whenever the hotkey registry changes (add/remove/pause/reset).
+   * Used by cheatsheet `linkedSignal` / `resource` to refresh derived state under zoneless CD.
+   */
+  readonly registryVersion = signal(0);
+
   private preventIn = ['INPUT', 'SELECT', 'TEXTAREA'];
   private options: IHotkeyOptions = {};
 
-  /** Zero-arg constructor keeps Angular DI happy (no interface tokens). */
+  /** Zero-arg constructor keeps Angular DI happy (no interface tokens). Real init in create/configure. */
   constructor() {
-    // Real init happens in create() / configure().
+    // Intentionally empty — see class doc. Consumers: inject(HotkeysService).
   }
 
   /** Preferred construction path used by provideHotkeys / forRoot / directive. */
@@ -47,7 +58,12 @@ export class HotkeysService {
     this.hotkeys = [];
     this.pausedHotkeys = [];
     this.cheatSheetToggle.set(false);
+    this.bumpRegistry();
     this.initCheatSheet();
+  }
+
+  private bumpRegistry(): void {
+    this.registryVersion.update((v) => v + 1);
   }
 
   private initCheatSheet(): void {
@@ -118,6 +134,7 @@ export class HotkeysService {
       },
       specificEvent,
     );
+    this.bumpRegistry();
     return hotkey;
   }
 
@@ -139,6 +156,7 @@ export class HotkeysService {
     if (index > -1) {
       this.hotkeys.splice(index, 1);
       this.mousetrap.unbind((hotkey as Hotkey).combo, specificEvent);
+      this.bumpRegistry();
       return hotkey;
     }
     return null;
@@ -176,6 +194,7 @@ export class HotkeysService {
     }
     this.remove(hotkey);
     this.pausedHotkeys.push(hotkey as Hotkey);
+    this.bumpRegistry();
     return hotkey;
   }
 
@@ -203,6 +222,7 @@ export class HotkeysService {
     this.hotkeys = [];
     this.pausedHotkeys = [];
     this.cheatSheetToggle.set(false);
+    this.bumpRegistry();
     this.initCheatSheet();
   }
 
