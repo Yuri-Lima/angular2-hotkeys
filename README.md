@@ -48,16 +48,18 @@ Compiling on Angular 22 is not enough — this line **uses** Angular 22 APIs: `i
 3. [Requirements](#requirements)
 4. [Installation](#installation)
 5. [Quick start](#quick-start)
-6. [Zoneless support](#zoneless-support)
-7. [Cheat sheet](#cheat-sheet)
-8. [Element-scoped hotkeys](#element-scoped-hotkeys)
-9. [Configuration](#configuration)
-10. [API reference](#api-reference)
-11. [Compatibility & migration](#compatibility--migration)
-12. [Legacy NgModule support](#legacy-ngmodule-support-deprecated)
-13. [Development (Nx workspace)](#development-nx-workspace)
-14. [Scripts & Makefile](#scripts--makefile)
-15. [License & credits](#license--credits)
+6. [Use case scenarios](#use-case-scenarios)
+7. [Same shortcut, different actions by focus](#same-shortcut-different-actions-by-focus)
+8. [Zoneless support](#zoneless-support)
+9. [Cheat sheet](#cheat-sheet)
+10. [Element-scoped hotkeys](#element-scoped-hotkeys)
+11. [Configuration](#configuration)
+12. [API reference](#api-reference)
+13. [Compatibility & migration](#compatibility--migration)
+14. [Legacy NgModule support](#legacy-ngmodule-support-deprecated)
+15. [Development (Nx workspace)](#development-nx-workspace)
+16. [Scripts & Makefile](#scripts--makefile)
+17. [License & credits](#license--credits)
 
 ---
 
@@ -232,6 +234,361 @@ Supported key strings follow Mousetrap: [craig.is/killing/mice](https://craig.is
 
 ---
 
+## Use case scenarios
+
+Common app patterns and how to implement them with this library.
+
+### 1. App-wide save / undo / open help
+
+Register once at the root (or a shell layout) with `HotkeysService`. Good for actions that should work almost everywhere.
+
+```ts
+private readonly hotkeys = inject(HotkeysService);
+private readonly documents = inject(DocumentStore);
+
+ngOnInit(): void {
+  this.hotkeys.add([
+    new Hotkey('mod+s', () => {
+      this.documents.saveActive();
+      return false; // prevent browser “Save page”
+    }, undefined, 'Save document'),
+
+    new Hotkey('mod+z', () => {
+      this.documents.undo();
+      return false;
+    }, undefined, 'Undo'),
+
+    // Already registered by provideHotkeys unless disableCheatSheet: true
+    // new Hotkey('?', ...)
+  ]);
+}
+```
+
+Use `mod+` instead of `ctrl+` / `command+` when you want the platform “primary” modifier (Ctrl on Windows/Linux, ⌘ on macOS).
+
+### 2. Allow a shortcut while typing in an input
+
+By default, global combos are **suppressed** in `INPUT`, `SELECT`, and `TEXTAREA` so typing is not hijacked. Opt a combo back in with `allowIn`:
+
+```ts
+this.hotkeys.add(
+  new Hotkey(
+    'mod+enter',
+    () => {
+      this.submitComposer();
+      return false;
+    },
+    ['INPUT', 'TEXTAREA'], // 3rd arg — fire even while focused in these tags
+    'Send message',
+  ),
+);
+```
+
+Also works for custom tags if you pass their `nodeName` (e.g. cheatsheet uses `HOTKEYS-CHEATSHEET` for Esc close).
+
+### 3. Modal / drawer: close with `Esc`, pause the rest
+
+While a modal is open you often want **only** Esc (or a small set) active:
+
+```ts
+private readonly hotkeys = inject(HotkeysService);
+private modalKeys: Hotkey[] = [];
+
+openModal(): void {
+  this.hotkeys.pause(); // stash all current global bindings
+  this.modalKeys = this.hotkeys.add(
+    new Hotkey('esc', () => {
+      this.closeModal();
+      return false;
+    }, undefined, 'Close dialog'),
+  ) as Hotkey[];
+}
+
+closeModal(): void {
+  this.hotkeys.remove(this.modalKeys);
+  this.hotkeys.unpause(); // restore what was active before the modal
+}
+```
+
+### 4. Route- or feature-specific shortcuts
+
+Add on activate, remove on destroy so leaving the page does not leave “ghost” handlers:
+
+```ts
+export class InboxPage implements OnInit, OnDestroy {
+  private readonly hotkeys = inject(HotkeysService);
+  private bindings: Hotkey[] = [];
+
+  ngOnInit(): void {
+    this.bindings = this.hotkeys.add([
+      new Hotkey('j', () => (this.next(), false), undefined, 'Next thread'),
+      new Hotkey('k', () => (this.prev(), false), undefined, 'Previous thread'),
+      new Hotkey('e', () => (this.archive(), false), undefined, 'Archive'),
+    ]) as Hotkey[];
+  }
+
+  ngOnDestroy(): void {
+    this.hotkeys.remove(this.bindings);
+  }
+}
+```
+
+For combos that must survive navigation, pass `persistent: true` as the last `Hotkey` constructor argument (6th param) when your app’s routing layer uses that flag.
+
+### 5. Command palette / “go to”
+
+```ts
+this.hotkeys.add(
+  new Hotkey('mod+k', () => {
+    this.paletteOpen.set(true);
+    return false;
+  }, undefined, 'Open command palette'),
+);
+```
+
+Prefer a **signal** for `paletteOpen` so zoneless hosts still re-render.
+
+### 6. Multi-panel UI (list + detail + editor)
+
+Same physical keys, different meaning per panel — see the next section. Typical layout:
+
+| Focus | `mod+s` | `Delete` / `Backspace` |
+| :--- | :--- | :--- |
+| Document list | — (or “save all”) | Delete selected row |
+| Rich-text editor | Save document | Delete selection / character |
+| Preview iframe | ignored / browser default | ignored |
+
+Use **element-scoped** `[hotkeys]` on each panel (recommended), or one global handler that branches on `document.activeElement` / a focus service.
+
+### 7. Integration demo (`test-app/`)
+
+The zoneless demo exercises:
+
+| Combo | Action |
+| :--- | :--- |
+| `?` | Toggle cheatsheet |
+| `Esc` | Close cheatsheet (`cheatSheetCloseEsc: true`) |
+| `ctrl+s` / `ctrl+z` | Demo “save” / “undo” feedback via signals |
+
+Run: `pnpm exec nx serve test-app` → `http://127.0.0.1:4300/`.
+
+---
+
+## Same shortcut, different actions by focus
+
+Apps often need **one combo** (e.g. `mod+s`, `Esc`, `Delete`) to mean different things depending on **which component owns focus**. This library supports that in three complementary ways.
+
+### Mental model
+
+| Layer | Scope | When it runs |
+| :--- | :--- | :--- |
+| **Global** `HotkeysService.add(...)` | Whole document (Mousetrap on `document`) | Always, unless suppressed in form fields or `pause()`d |
+| **Element-scoped** `[hotkeys]` | Host element + descendants (Mousetrap on that node) | When focus is inside the host |
+| **Callback branching** | Single global binding | You inspect focus / app state inside the handler |
+
+```text
+┌─────────────────────────────────────────────┐
+│  App shell — global mod+s = “Save all”      │
+│  ┌──────────────────┐  ┌─────────────────┐  │
+│  │ [hotkeys] list   │  │ [hotkeys] editor│  │
+│  │ mod+s → export   │  │ mod+s → save    │  │
+│  │ del  → remove    │  │ del  → (edit)   │  │
+│  └──────────────────┘  └─────────────────┘  │
+└─────────────────────────────────────────────┘
+```
+
+### Pattern A — Element-scoped override (recommended)
+
+`HotkeysDirective` binds Mousetrap **to the host element**. While the directive is alive it also **temporarily removes** any **global** binding for the same combo and restores it on destroy. Result:
+
+1. Focus **inside** the host → local handler runs.
+2. Host destroyed / unbound → previous global handler (if any) is restored.
+3. Focus **outside** the host while the host is still mounted → the global combo for that key is **not** active (it was stashed); only hosts with their own binding for that key respond when focused.
+
+Make the host focusable (`tabindex="0"`) if it is not a natural focus target (plain `div`).
+
+```ts
+// editor-panel.component.ts
+import { Component } from '@angular/core';
+import { HotkeysDirective } from 'angular2-hotkeys';
+
+@Component({
+  selector: 'app-editor-panel',
+  standalone: true,
+  imports: [HotkeysDirective],
+  template: `
+    <section
+      class="panel"
+      tabindex="0"
+      [hotkeys]="editorHotkeys"
+      (focus)="onFocus()"
+    >
+      <h2>Editor</h2>
+      <!-- editor UI -->
+    </section>
+  `,
+})
+export class EditorPanelComponent {
+  /** Signal-input friendly array of combo → handler maps */
+  readonly editorHotkeys = [
+    {
+      'mod+s': () => {
+        this.saveDocument();
+        return false;
+      },
+    },
+    {
+      esc: () => {
+        this.blurEditor();
+        return false;
+      },
+    },
+  ];
+
+  saveDocument(): void { /* ... */ }
+  blurEditor(): void { /* ... */ }
+  onFocus(): void { /* optional analytics */ }
+}
+```
+
+```ts
+// file-list.component.ts — same mod+s, different action
+@Component({
+  selector: 'app-file-list',
+  standalone: true,
+  imports: [HotkeysDirective],
+  template: `
+    <section class="panel" tabindex="0" [hotkeys]="listHotkeys">
+      <h2>Files</h2>
+      <!-- list UI -->
+    </section>
+  `,
+})
+export class FileListComponent {
+  readonly listHotkeys = [
+    {
+      'mod+s': () => {
+        this.exportSelection();
+        return false;
+      },
+    },
+    {
+      del: () => {
+        this.deleteSelection();
+        return false;
+      },
+    },
+  ];
+
+  exportSelection(): void { /* ... */ }
+  deleteSelection(): void { /* ... */ }
+}
+```
+
+```html
+<!-- parent layout: both panels mounted; focus decides which mod+s runs -->
+<div class="workspace">
+  <app-file-list />
+  <app-editor-panel />
+</div>
+```
+
+**Tips for multi-panel UIs**
+
+- Give each panel a visible focus style (`:focus-visible`) so users know which set of shortcuts is active.
+- Prefer **click-to-focus** on the panel container (`tabindex="0"`) so mouse users enter the right scope.
+- Keep descriptions only on the global “default” combos if you do not want duplicate rows in the cheatsheet for every panel override.
+- Nested `[hotkeys]` hosts: the element that actually has focus (or its Mousetrap host) wins for element-bound listeners.
+
+### Pattern B — One global handler, branch on focus / state
+
+Use when the same combo should stay registered globally and logic is simple:
+
+```ts
+this.hotkeys.add(
+  new Hotkey(
+    'mod+s',
+    () => {
+      const active = document.activeElement as HTMLElement | null;
+
+      if (active?.closest('app-editor-panel')) {
+        this.saveEditor();
+        return false;
+      }
+      if (active?.closest('app-file-list')) {
+        this.exportList();
+        return false;
+      }
+
+      // Fallback: app-wide default
+      this.saveAllDirty();
+      return false;
+    },
+    undefined,
+    'Save (context-aware)',
+  ),
+);
+```
+
+Or drive branching from an Angular focus service / signal set by `(focusin)` on panels — better for tests and zoneless purity than reading the DOM ad hoc.
+
+```ts
+// focus-context.service.ts (sketch)
+@Injectable({ providedIn: 'root' })
+export class FocusContext {
+  readonly region = signal<'shell' | 'list' | 'editor'>('shell');
+}
+
+// in the global hotkey:
+new Hotkey('mod+s', () => {
+  switch (this.focus.region()) {
+    case 'editor': this.saveEditor(); break;
+    case 'list': this.exportList(); break;
+    default: this.saveAllDirty();
+  }
+  return false;
+}, undefined, 'Save (context-aware)');
+```
+
+### Pattern C — Swap globals when a feature becomes active
+
+Useful for full-screen modes (image cropper, code diff) where the whole page is one “focus mode” even if DOM focus moves among children:
+
+```ts
+enterCropMode(): void {
+  this.hotkeys.pause();
+  this.modeKeys = this.hotkeys.add([
+    new Hotkey('enter', () => (this.applyCrop(), false), undefined, 'Apply crop'),
+    new Hotkey('esc', () => (this.cancelCrop(), false), undefined, 'Cancel crop'),
+  ]) as Hotkey[];
+}
+
+leaveCropMode(): void {
+  this.hotkeys.remove(this.modeKeys);
+  this.hotkeys.unpause();
+}
+```
+
+### Choosing a pattern
+
+| Situation | Prefer |
+| :--- | :--- |
+| Two+ panels visible; shortcut follows keyboard focus | **A — `[hotkeys]` per panel** |
+| Mostly one meaning; rare special cases | **B — branch in one global callback** |
+| Full-screen mode replaces the whole shortcut map | **C — `pause` / add / `unpause`** |
+| Must work while caret is in an `<input>` | Global + **`allowIn`** (see use case 2) |
+| Must not steal keys from form fields | Default global behavior (no `allowIn`) |
+
+### Pitfalls
+
+1. **Missing `tabindex`** — a non-focusable `div` never receives focus; element-scoped combos will not run. Use `tabindex="0"` (or a real control inside the host).
+2. **Forgetting restore** — if you `remove` globals yourself, always re-`add` them in `ngOnDestroy` / `DestroyRef`. The directive does this for you for stashed combos.
+3. **Returning `true` vs `false`** — return `false` when you handled the shortcut and want to stop the browser default (especially `mod+s`, `mod+p`).
+4. **Cheatsheet noise** — panel overrides often omit `description` so only app-wide defaults appear in `?` help.
+5. **Zoneless** — mutate **signals** (or call `ChangeDetectorRef.markForCheck()`) inside handlers so the focused panel’s UI updates.
+
+---
+
 ## Zoneless support
 
 **This library supports zoneless Angular applications.**
@@ -298,10 +655,11 @@ Add the standalone component once near the root of your UI:
 
 ## Element-scoped hotkeys
 
-Bind shortcuts to a host element (and its children) with the standalone directive. The `[hotkeys]` binding is a **signal input** and rebinds when the value changes.
+Bind shortcuts to a host element (and its children) with the standalone `HotkeysDirective`. The `[hotkeys]` binding is a **signal input** and rebinds when the value changes. This is the primary tool for [focus-dependent combos](#same-shortcut-different-actions-by-focus).
 
 ```html
 <div
+  tabindex="0"
   [hotkeys]="[
     { 'ctrl+k': onCommandPalette },
     { 'esc': onEscape }
@@ -330,7 +688,14 @@ export class EditorComponent {
 }
 ```
 
-Mousetrap is attached in **`afterNextRender()`** so the host element is in the DOM (SSR/hydration-friendly). On destroy, local bindings unbind and any temporarily overridden global combos are restored.
+**How it works**
+
+1. Mousetrap is created on the **host element** in **`afterNextRender()`** (SSR/hydration-friendly).
+2. For each local combo, any **global** `HotkeysService` binding with the same combo is **removed and stashed**.
+3. An `effect` rebinds when the `hotkeys` signal input changes after the view is ready.
+4. On destroy (or rebind), local keys unbind and stashed **globals are restored**.
+
+Import `HotkeysDirective` on the standalone component that owns the host. The directive provides its own `HotkeysService` instance for bookkeeping of stashed globals against the app-wide registry.
 
 ---
 
