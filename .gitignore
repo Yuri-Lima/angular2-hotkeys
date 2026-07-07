@@ -46,3 +46,12 @@ testem.log
 # System Files
 .DS_Store
 Thumbs.db
+
+# Migration artifacts
+/dist
+/coverage
+/out-tsc
+/test-app/node_modules
+/test-app/dist
+/test-app/.angular
+*.log

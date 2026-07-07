@@ -1,32 +1,31 @@
 {
-    "compileOnSave": false,
-    "compilerOptions": {
-      "baseUrl": "./",
-      "outDir": "./dist/out-tsc",
-      "sourceMap": true,
-      "declaration": false,
-      "downlevelIteration": true,
-      "experimentalDecorators": true,
-      "module": "es2020",
-      "moduleResolution": "node",
-      "importHelpers": true,
-      "target": "ES2022",
-      "typeRoots": [
-        "node_modules/@types"
-      ],
-      "lib": [
-        "es2018",
-        "dom"
-      ],
-      "paths": {
-        "angular2-hotkeys": [
-          "dist/"
-        ]
-      },
-      "useDefineForClassFields": false
+  "compileOnSave": false,
+  "compilerOptions": {
+    "baseUrl": "./",
+    "outDir": "./dist/out-tsc",
+    "sourceMap": true,
+    "declaration": false,
+    "experimentalDecorators": true,
+    "module": "es2022",
+    "moduleResolution": "bundler",
+    "importHelpers": true,
+    "target": "ES2022",
+    "lib": ["es2022", "dom"],
+    "paths": {
+      "angular2-hotkeys": ["dist/"]
     },
-    "angularCompilerOptions": {
-        "fullTemplateTypeCheck": true,
-        "strictInjectionParameters": true
-    }
+    "useDefineForClassFields": false,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "noImplicitOverride": true,
+    "noPropertyAccessFromIndexSignature": false,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true
+  },
+  "angularCompilerOptions": {
+    "strictTemplates": true,
+    "strictInjectionParameters": true
+  }
 }
