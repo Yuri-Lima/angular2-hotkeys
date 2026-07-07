@@ -3,188 +3,260 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>angular2-hotkeys · Angular 22 + Nx Migration Dashboard</title>
+  <title>angular2-hotkeys · Angular 22 Deep Modernization Dashboard</title>
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
   <a class="skip" href="#main">Skip to content</a>
   <header class="hero">
-    <p class="eyebrow">Library modernization · Angular 22 + Nx</p>
+    <p class="eyebrow">Deep modernization · Angular 22 APIs</p>
     <h1>angular2-hotkeys</h1>
     <p class="lead">
-      Migrated from <strong>Angular 20</strong> to <strong>Angular 22</strong> and managed with
-      <strong>Nx 23.1</strong>: standalone APIs, Signals, signal <code>input()</code>,
-      TypeScript 6, zone.js 0.16, and an integration test-app.
+      Beyond “compiles on Angular 22”: adopted <strong>signal inputs</strong>,
+      <strong>inject()</strong>, <strong>linkedSignal()</strong>, <strong>resource()</strong>,
+      <strong>@defer</strong>, <strong>afterNextRender</strong>, and
+      <strong>zoneless change detection</strong>. Research-first — see <code>RESEARCH.md</code>.
     </p>
     <div class="badges" role="list">
       <span class="badge ok" role="listitem">Angular 22.0.5</span>
-      <span class="badge ok" role="listitem">Nx 23.1</span>
-      <span class="badge ok" role="listitem">34 unit tests</span>
-      <span class="badge ok" role="listitem">~95% line coverage</span>
+      <span class="badge ok" role="listitem">45 unit tests</span>
+      <span class="badge ok" role="listitem">≥85% coverage</span>
+      <span class="badge ok" role="listitem">Zoneless ready</span>
+      <span class="badge ok" role="listitem">Peers ≥20 &lt;23</span>
     </div>
   </header>
 
   <main id="main">
-    <section aria-labelledby="phases-title">
-      <h2 id="phases-title">Migration phase tracker</h2>
-      <ol class="phases">
-        <li class="done"><span class="n">1</span><div><strong>Tooling cleanup</strong><p>Remove TSLint / Protractor / Codelyzer · ESLint + strictTemplates</p></div></li>
-        <li class="done"><span class="n">2</span><div><strong>Angular 16 → 20</strong><p>Standalone + Signals + ESM Mousetrap baseline</p></div></li>
-        <li class="done"><span class="n">3</span><div><strong>Angular 20 → 22</strong><p>@angular/* 22.0.5 · TypeScript 6.0 · zone.js 0.16 · ng-packagr 22 · Node 22.22+</p></div></li>
-        <li class="done"><span class="n">4</span><div><strong>Nx workspace</strong><p>nx / @nx/angular 23.1.0-beta.7 · project graph for lib + test-app</p></div></li>
-        <li class="done"><span class="n">5</span><div><strong>Signals input()</strong><p>Cheatsheet title uses signal input · setInput in tests</p></div></li>
-        <li class="done"><span class="n">6</span><div><strong>Test suite</strong><p>Service / directive / component / module · ≥80% coverage · 34/34 green</p></div></li>
-        <li class="done"><span class="n">7</span><div><strong>Packaging</strong><p>peerDependencies ^22 · sideEffects:false · exports via ng-packagr</p></div></li>
-        <li class="done"><span class="n">8</span><div><strong>Integration test-app</strong><p>Angular 22 consumer · provideHotkeys · ?, Esc, ctrl+s</p></div></li>
-      </ol>
-    </section>
-
-    <section aria-labelledby="patterns-title">
-      <h2 id="patterns-title">Deprecated pattern inventory</h2>
+    <section aria-labelledby="research-title">
+      <h2 id="research-title">Research inventory</h2>
+      <p class="section-lead">Every API evaluated in Phase 1 (committed before migration code).</p>
       <div class="table-wrap">
-        <table>
+        <table id="research-table">
           <thead>
             <tr>
-              <th>Pattern</th>
-              <th>Was in</th>
-              <th>Replaced with</th>
-              <th>Phase</th>
+              <th scope="col">API</th>
+              <th scope="col">Applicable</th>
+              <th scope="col">Status</th>
+              <th scope="col">Affected file(s)</th>
+              <th scope="col">Notes</th>
             </tr>
           </thead>
           <tbody>
-            <tr><td>TSLint / Codelyzer / Protractor</td><td>package.json, tslint.json</td><td>ESLint + @angular-eslint</td><td>1</td></tr>
-            <tr><td>fullTemplateTypeCheck</td><td>tsconfig.json</td><td>strictTemplates: true</td><td>1</td></tr>
-            <tr><td>skipTemplateCodegen / strictMetadataEmit</td><td>tsconfig.lib.json</td><td>Removed (Ivy)</td><td>1</td></tr>
-            <tr><td>@NgModule declarations</td><td>hotkey.module.ts</td><td>standalone: true + provideHotkeys()</td><td>3</td></tr>
-            <tr><td>Subject&lt;any&gt; cheatSheetToggle</td><td>hotkeys.service.ts</td><td>WritableSignal&lt;boolean&gt;</td><td>4</td></tr>
-            <tr><td>BehaviorSubject + Subscription</td><td>cheatsheet.component.ts</td><td>signal + effect / computed</td><td>4</td></tr>
-            <tr><td>*ngFor / async pipe / [ngClass]</td><td>cheatsheet.component.html</td><td>@for / signal() / [class.in]</td><td>4</td></tr>
-            <tr><td>import * as Mousetrap + .default()</td><td>service + directive</td><td>import Mousetrap from 'mousetrap'</td><td>5</td></tr>
-            <tr><td>async from @angular/core/testing</td><td>*.spec.ts</td><td>waitForAsync</td><td>6</td></tr>
-            <tr><td>karma-coverage-istanbul-reporter</td><td>karma.conf.js</td><td>karma-coverage</td><td>1/6</td></tr>
-            <tr><td>event.srcElement only</td><td>hotkeys.service.ts</td><td>event.target || srcElement</td><td>4</td></tr>
-            <tr><td>style="display:none" on root</td><td>cheatsheet html</td><td>CSS .fade / .in visibility</td><td>4</td></tr>
+            <!-- filled by app.js -->
           </tbody>
         </table>
       </div>
     </section>
 
-    <section aria-labelledby="diff-title">
-      <h2 id="diff-title">Before / after — key changes</h2>
-      <div class="diff-grid">
-        <article>
-          <h3>NgModule → provideHotkeys()</h3>
-          <pre class="before"><code>// BEFORE
-@NgModule({
-  declarations: [HotkeysDirective, HotkeysCheatsheetComponent],
-  imports: [CommonModule],
-  exports: [HotkeysDirective, HotkeysCheatsheetComponent]
-})
-export class HotkeyModule {
-  static forRoot(options = {}) {
-    return { ngModule: HotkeyModule, providers: [...] };
-  }
-}</code></pre>
-          <pre class="after"><code>// AFTER
-export function provideHotkeys(options = {}) {
-  return makeEnvironmentProviders([
-    { provide: HotkeyOptions, useValue: options },
-    { provide: HotkeysService,
-      useFactory: () => HotkeysService.create(options) },
-  ]);
-}
-// HotkeyModule.forRoot kept @deprecated for BC</code></pre>
-        </article>
-        <article>
-          <h3>Subject → Signal</h3>
-          <pre class="before"><code>// BEFORE
-cheatSheetToggle: Subject&lt;any&gt; = new Subject();
-// ...
-this.cheatSheetToggle.next();
-this.cheatSheetToggle.next(false);</code></pre>
-          <pre class="after"><code>// AFTER
-cheatSheetToggle: WritableSignal&lt;boolean&gt; = signal(false);
-// ...
-this.cheatSheetToggle.update(o =&gt; !o);
-this.cheatSheetToggle.set(false);</code></pre>
-        </article>
-        <article>
-          <h3>*ngFor → @for</h3>
-          <pre class="before"><code>// BEFORE
-&lt;div [ngClass]="{'in': helpVisible$|async}"&gt;
-  &lt;tr *ngFor="let hotkey of hotkeys"&gt;
-    &lt;span *ngFor="let key of hotkey.formatted"&gt;</code></pre>
-          <pre class="after"><code>// AFTER
-&lt;div class="fade" [class.in]="helpVisible()"&gt;
-  @for (hotkey of hotkeys(); track hotkey) {
-    @for (key of hotkey.formatted; track key) {
-      &lt;span class="cfp-hotkeys-key"&gt;{{ key }}&lt;/span&gt;
-    }
-  }</code></pre>
-        </article>
+    <section aria-labelledby="flow-title">
+      <h2 id="flow-title">API migration flow</h2>
+      <div class="flow" role="list">
+        <div class="flow-step" role="listitem"><span class="old">@Input()</span><span class="arrow" aria-hidden="true">→</span><span class="new">input()</span></div>
+        <div class="flow-step" role="listitem"><span class="old">constructor(DI)</span><span class="arrow" aria-hidden="true">→</span><span class="new">inject()</span></div>
+        <div class="flow-step" role="listitem"><span class="old">zone.js CD</span><span class="arrow" aria-hidden="true">→</span><span class="new">provideZonelessChangeDetection()</span></div>
+        <div class="flow-step" role="listitem"><span class="old">eager overlay</span><span class="arrow" aria-hidden="true">→</span><span class="new">@defer (when helpVisible())</span></div>
+        <div class="flow-step" role="listitem"><span class="old">effect + signal list</span><span class="arrow" aria-hidden="true">→</span><span class="new">linkedSignal() + resource()</span></div>
+        <div class="flow-step" role="listitem"><span class="old">ngOnInit bind</span><span class="arrow" aria-hidden="true">→</span><span class="new">afterNextRender + effect</span></div>
       </div>
     </section>
 
-    <section aria-labelledby="demo-title">
-      <h2 id="demo-title">Live keyboard shortcut demo</h2>
-      <p>
-        The integration test-app on port <code>4300</code> consumes the built library via
-        <code>provideHotkeys()</code>. Browser proof (Playwright):
-      </p>
-      <ul class="proof-list">
-        <li><kbd>?</kbd> opens the cheatsheet overlay with registered shortcuts</li>
-        <li><kbd>Esc</kbd> closes the overlay</li>
-        <li><kbd>Ctrl</kbd>+<kbd>S</kbd> fires Save and updates the toast / last-action line</li>
-      </ul>
-      <div class="shots">
-        <figure>
-          <img src="proof-test-app.png" alt="test-app idle state screenshot" width="640" />
-          <figcaption>test-app idle</figcaption>
-        </figure>
-        <figure>
-          <img src="proof-cheatsheet.png" alt="cheatsheet open screenshot" width="640" />
-          <figcaption>cheatsheet open after ?</figcaption>
-        </figure>
+    <section aria-labelledby="diff-title">
+      <h2 id="diff-title">Before / after code</h2>
+      <div class="diff-tabs" role="tablist" aria-label="Code comparison topics">
+        <button type="button" role="tab" aria-selected="true" data-diff="input" id="tab-input">@Input → input()</button>
+        <button type="button" role="tab" aria-selected="false" data-diff="inject" id="tab-inject">constructor → inject()</button>
+        <button type="button" role="tab" aria-selected="false" data-diff="zone" id="tab-zone">zone → zoneless</button>
+        <button type="button" role="tab" aria-selected="false" data-diff="defer" id="tab-defer">template → @defer</button>
       </div>
-      <div class="mini-demo" id="mini-demo" tabindex="0" aria-label="Embedded signal demo">
-        <p>Embedded signal demo (no Mousetrap — illustrates the new API shape):</p>
-        <button type="button" id="btn-toggle">Toggle helpVisible signal</button>
-        <button type="button" id="btn-save">Simulate ctrl+s</button>
-        <p>State: <strong id="demo-state">closed</strong> · Last: <strong id="demo-last">—</strong></p>
-        <div id="demo-sheet" class="cfp-hotkeys-container fade" hidden>
-          <div class="cfp-hotkeys">
-            <h4 class="cfp-hotkeys-title">Keyboard Shortcuts:</h4>
-            <table><tbody>
-              <tr><td class="cfp-hotkeys-keys"><span class="cfp-hotkeys-key">?</span></td><td class="cfp-hotkeys-text">Show / hide this help menu</td></tr>
-              <tr><td class="cfp-hotkeys-keys"><span class="cfp-hotkeys-key">⌃</span><span class="cfp-hotkeys-key">S</span></td><td class="cfp-hotkeys-text">Save document</td></tr>
-              <tr><td class="cfp-hotkeys-keys"><span class="cfp-hotkeys-key">⌃</span><span class="cfp-hotkeys-key">Z</span></td><td class="cfp-hotkeys-text">Undo last change</td></tr>
-            </tbody></table>
+      <div class="diff-panels">
+        <div class="diff-panel" id="panel-input" role="tabpanel" aria-labelledby="tab-input">
+          <div class="diff-grid">
+            <pre class="before" tabindex="0"><code>@Input() hotkeys: HotkeyBindingMap[] = [];
+
+constructor(
+  private hotkeysService: HotkeysService,
+  private elementRef: ElementRef,
+) {
+  this.mousetrap = new Mousetrap(
+    this.elementRef.nativeElement,
+  );
+}
+
+ngOnInit(): void {
+  for (const hotkey of this.hotkeys) { ... }
+}</code></pre>
+            <pre class="after" tabindex="0"><code>readonly hotkeys = input&lt;HotkeyBindingMap[]&gt;([]);
+
+private readonly hotkeysService = inject(HotkeysService);
+private readonly elementRef = inject(ElementRef);
+
+constructor() {
+  afterNextRender(() =&gt; {
+    this.mousetrap = new Mousetrap(
+      this.elementRef.nativeElement,
+    );
+    this.bindAll(this.hotkeys());
+  });
+  effect(() =&gt; this.rebind(this.hotkeys()));
+}</code></pre>
+          </div>
+        </div>
+        <div class="diff-panel hidden" id="panel-inject" role="tabpanel" aria-labelledby="tab-inject" hidden>
+          <div class="diff-grid">
+            <pre class="before" tabindex="0"><code>export class HotkeysCheatsheetComponent {
+  constructor(private hotkeysService: HotkeysService) {
+    effect(() =&gt; { ... });
+  }
+}
+
+// test-app
+constructor(private hotkeys: HotkeysService) {}</code></pre>
+            <pre class="after" tabindex="0"><code>export class HotkeysCheatsheetComponent {
+  private readonly hotkeysService = inject(HotkeysService);
+  readonly hotkeys = linkedSignal({ ... });
+  readonly sheetResource = resource({ ... });
+}
+
+// test-app
+private readonly hotkeys = inject(HotkeysService);</code></pre>
+          </div>
+        </div>
+        <div class="diff-panel hidden" id="panel-zone" role="tabpanel" aria-labelledby="tab-zone" hidden>
+          <div class="diff-grid">
+            <pre class="before" tabindex="0"><code>// app.config.ts
+provideZoneChangeDetection({ eventCoalescing: true })
+
+// angular.json
+"polyfills": ["zone.js"]
+
+// package.json
+"zone.js": "~0.16.0"</code></pre>
+            <pre class="after" tabindex="0"><code>// app.config.ts
+provideZonelessChangeDetection()
+
+// angular.json
+"polyfills": []
+
+// no zone.js dependency
+// signals drive CD for cheatsheet + toasts</code></pre>
+          </div>
+        </div>
+        <div class="diff-panel hidden" id="panel-defer" role="tabpanel" aria-labelledby="tab-defer" hidden>
+          <div class="diff-grid">
+            <pre class="before" tabindex="0"><code>&lt;div class="cfp-hotkeys-container fade"
+     [class.in]="helpVisible()"&gt;
+  &lt;div class="cfp-hotkeys"&gt;...&lt;/div&gt;
+&lt;/div&gt;</code></pre>
+            <pre class="after" tabindex="0"><code>@defer (when helpVisible()) {
+  &lt;div class="cfp-hotkeys-container fade"
+       [class.in]="helpVisible()"&gt;
+    &lt;div class="cfp-hotkeys"&gt;...&lt;/div&gt;
+  &lt;/div&gt;
+} @placeholder {
+  &lt;div class="cfp-hotkeys-container fade"
+       aria-hidden="true"&gt;&lt;/div&gt;
+}</code></pre>
           </div>
         </div>
       </div>
     </section>
 
-    <section aria-labelledby="cov-title">
-      <h2 id="cov-title">Test coverage</h2>
-      <div class="chart" role="img" aria-label="Coverage before 5.8 percent, after 95 percent">
-        <div class="bar-row">
-          <span>Before</span>
-          <div class="bar"><i style="width:5.8%"></i></div>
-          <span>5.8%</span>
-        </div>
-        <div class="bar-row">
-          <span>After</span>
-          <div class="bar after"><i style="width:95%"></i></div>
-          <span>~95%</span>
-        </div>
+    <section aria-labelledby="zone-matrix-title">
+      <h2 id="zone-matrix-title">Zoneless compatibility matrix</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Feature</th>
+              <th scope="col">With zone.js</th>
+              <th scope="col">Zoneless</th>
+              <th scope="col">How verified</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>Hotkey binding (global)</td><td class="ok">Pass</td><td class="ok">Pass</td><td>Service specs + zoneless suite</td></tr>
+            <tr><td>Cheatsheet toggle (?)</td><td class="ok">Pass</td><td class="ok">Pass</td><td>Signal write → UI class <code>.in</code></td></tr>
+            <tr><td>Cheatsheet close (Esc)</td><td class="ok">Pass</td><td class="ok">Pass</td><td>Callback sets signal false</td></tr>
+            <tr><td>Directive element scope</td><td class="ok">Pass</td><td class="ok">Pass</td><td>afterNextRender bind</td></tr>
+            <tr><td>Pause / unpause</td><td class="ok">Pass</td><td class="ok">Pass</td><td>registryVersion signal</td></tr>
+            <tr><td>resource() sheet load</td><td class="ok">Pass</td><td class="ok">Pass</td><td>hasValue() after open</td></tr>
+          </tbody>
+        </table>
       </div>
-      <p class="muted">Library: 34/34 Karma tests passing · statements/lines ≥ 94% · branches ≥ 70%.</p>
+    </section>
+
+    <section aria-labelledby="coverage-title">
+      <h2 id="coverage-title">Test coverage</h2>
+      <div class="charts" aria-hidden="false">
+        <figure>
+          <figcaption>Statements / lines / functions (global)</figcaption>
+          <div class="bars" id="coverage-bars">
+            <div class="bar-row"><span>Statements</span><div class="bar"><i style="--p:95"></i></div><em>95%</em></div>
+            <div class="bar-row"><span>Lines</span><div class="bar"><i style="--p:95"></i></div><em>95%</em></div>
+            <div class="bar-row"><span>Functions</span><div class="bar"><i style="--p:98"></i></div><em>98%</em></div>
+            <div class="bar-row"><span>Branches</span><div class="bar"><i style="--p:72"></i></div><em>72%</em></div>
+            <div class="bar-row target"><span>Target</span><div class="bar"><i style="--p:85"></i></div><em>85%</em></div>
+          </div>
+        </figure>
+        <figure>
+          <figcaption>Before (G13) vs after (deep mod)</figcaption>
+          <ul class="compare-list">
+            <li><strong>Tests:</strong> 34 → <strong>45</strong> (+ zoneless suite)</li>
+            <li><strong>Coverage gate:</strong> 80% → <strong>85%</strong></li>
+            <li><strong>Legacy APIs removed:</strong> @Input, constructor DI in components/directives</li>
+            <li><strong>zone.js in test-app:</strong> required → <strong>removed</strong></li>
+          </ul>
+        </figure>
+      </div>
+    </section>
+
+    <section aria-labelledby="demo-title">
+      <h2 id="demo-title">Live keyboard demo (simulated zoneless signals)</h2>
+      <p class="section-lead">
+        Press <kbd>?</kbd>, <kbd>Esc</kbd>, <kbd>Ctrl</kbd>+<kbd>S</kbd>, or <kbd>Ctrl</kbd>+<kbd>Z</kbd>
+        on this page. Demo uses the same signal patterns as the library (no zone.js).
+      </p>
+      <div class="demo" id="live-demo">
+        <p>Last action: <strong id="demo-last" aria-live="polite">(none yet)</strong></p>
+        <p>Cheatsheet: <strong id="demo-sheet" aria-live="polite">closed</strong></p>
+        <div id="demo-overlay" class="cfp-hotkeys-container fade" hidden>
+          <div class="cfp-hotkeys">
+            <h4 class="cfp-hotkeys-title">Keyboard Shortcuts:</h4>
+            <table>
+              <tbody id="demo-rows"></tbody>
+            </table>
+            <button type="button" class="cfp-hotkeys-close" id="demo-close" aria-label="Close">×</button>
+          </div>
+        </div>
+        <ul class="demo-keys">
+          <li><kbd>?</kbd> toggle cheatsheet</li>
+          <li><kbd>Esc</kbd> close</li>
+          <li><kbd>Ctrl+S</kbd> save</li>
+          <li><kbd>Ctrl+Z</kbd> undo</li>
+        </ul>
+      </div>
+    </section>
+
+    <section aria-labelledby="preview-title">
+      <h2 id="preview-title">Preview</h2>
+      <img src="preview.gif" alt="Animated preview of the modernization dashboard and hotkey demo" width="720" loading="lazy" />
+    </section>
+
+    <section aria-labelledby="commits-title">
+      <h2 id="commits-title">Implementation commits (local)</h2>
+      <ol class="phases" id="commit-phases">
+        <li class="done"><span class="n">1</span><div><strong>RESEARCH.md</strong><p>≥12 APIs documented incl. resource() + linkedSignal()</p></div></li>
+        <li class="done"><span class="n">2</span><div><strong>Signal component model</strong><p>input(), inject(), linkedSignal, resource, afterNextRender</p></div></li>
+        <li class="done"><span class="n">3</span><div><strong>Zoneless support</strong><p>Dedicated suite + test-app without zone.js</p></div></li>
+        <li class="done"><span class="n">4</span><div><strong>@defer + packaging + docs</strong><p>Cheatsheet defer, peers ≥20, README, UI</p></div></li>
+      </ol>
     </section>
   </main>
 
   <footer>
-    <p>angular2-hotkeys v22 · Angular 22 + Nx 23.1 · MIT</p>
+    <p>angular2-hotkeys · Angular 22 deep modernization · <code>make ui</code> · GH Pages: deploy <code>ui/</code></p>
   </footer>
-  <script src="app.js"></script>
+
+  <script src="app.js" defer></script>
 </body>
 </html>

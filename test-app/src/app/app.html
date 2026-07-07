@@ -3,14 +3,18 @@
     <h1>{{ title() }}</h1>
     <p class="lead">
       Integration proof that <code>angular2-hotkeys</code> works as a consumed dependency via
-      <code>provideHotkeys()</code>.
+      <code>provideHotkeys()</code> with <strong>zoneless</strong> change detection
+      (<code>provideZonelessChangeDetection()</code>, no <code>zone.js</code>).
+    </p>
+    <p class="meta">
+      Mode: <strong id="cd-mode">{{ zoneless() ? 'zoneless' : 'zone' }}</strong>
     </p>
   </header>
 
   <section class="card">
     <h2>Registered shortcuts</h2>
     <ul>
-      <li><kbd>?</kbd> — open / close the cheatsheet overlay</li>
+      <li><kbd>?</kbd> — open / close the cheatsheet overlay (lazy via <code>&#64;defer</code>)</li>
       <li><kbd>Esc</kbd> — close the cheatsheet</li>
       <li><kbd>Ctrl</kbd> + <kbd>S</kbd> — Save (shows toast)</li>
       <li><kbd>Ctrl</kbd> + <kbd>Z</kbd> — Undo (shows toast)</li>
@@ -22,5 +26,10 @@
     <div class="toast" role="status" aria-live="polite">{{ msg }}</div>
   }
 
-  <hotkeys-cheatsheet title="Keyboard Shortcuts:" />
+  <!-- Defer cheatsheet until idle; library also defers overlay body when opened -->
+  @defer (on idle) {
+    <hotkeys-cheatsheet title="Keyboard Shortcuts:" />
+  } @placeholder {
+    <p class="defer-placeholder" aria-live="polite">Loading cheatsheet…</p>
+  }
 </main>

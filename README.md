@@ -21,7 +21,7 @@
 | | |
 | :--- | :--- |
 | **Package** | [`angular2-hotkeys@22.0.0`](https://www.npmjs.com/package/angular2-hotkeys) |
-| **Peers** | `@angular/core` · `@angular/common` `^22` · `rxjs` `^7` |
+| **Peers** | `@angular/core` · `@angular/common` `>=20 <23` · `rxjs` `^7` |
 | **Runtime** | Node `^22.22.3 \|\| ^24.15.0 \|\| >=26` · see [`.nvmrc`](.nvmrc) |
 | **Demo** | [`test-app/`](./test-app) · `npx nx serve test-app` → `http://127.0.0.1:4300/` |
 | **Dashboard** | [`ui/`](./ui) · `make ui` → `http://localhost:8765/` |
@@ -55,9 +55,10 @@
 
 | Feature | Detail |
 | :--- | :--- |
-| **Angular 22 native** | `provideHotkeys()`, standalone components/directives, signal-based state |
+| **Angular 22 APIs** | `input()`, `inject()`, `linkedSignal()`, `resource()`, `@defer`, OnPush |
+| **Zoneless-ready** | Works with `provideZonelessChangeDetection()` — no `zone.js` required |
 | **Global + local bindings** | App-wide service API and optional element-scoped `HotkeysDirective` |
-| **Built-in help UI** | `<hotkeys-cheatsheet>` overlay, toggle with `?` (configurable) |
+| **Built-in help UI** | `<hotkeys-cheatsheet>` overlay, toggle with `?` (lazy via `@defer`) |
 | **Mousetrap combos** | Familiar syntax: `ctrl+s`, `meta+shift+g`, sequences, mod keys |
 | **Tree-shakeable package** | `sideEffects: false`, Ivy partial compilation via ng-packagr |
 | **Nx monorepo** | Library + real consumer app in one graph (`build` / `test` / `lint` / `serve`) |
@@ -68,10 +69,11 @@
 
 | Tool | Version |
 | :--- | :--- |
-| **Angular** | `^22.0.0` |
+| **Angular** | `>=20.0.0 <23.0.0` (developed & tested on 22) |
 | **RxJS** | `^7.0.0` |
 | **Node.js** | `^22.22.3` or `^24.15.0` or `>=26` |
 | **TypeScript** (apps) | `~6.0` recommended |
+| **zone.js** | **Optional** — not required (zoneless supported) |
 
 > Older library lines target older Angular majors — see [Compatibility](#compatibility).
 
@@ -93,16 +95,16 @@ npm install @angular/core@^22 @angular/common@^22 rxjs@^7
 
 ## Quick start
 
-### 1. Register providers
+### 1. Register providers (zoneless recommended)
 
 ```ts
 // app.config.ts
-import { ApplicationConfig, provideZoneChangeDetection } from '@angular/core';
+import { ApplicationConfig, provideZonelessChangeDetection } from '@angular/core';
 import { provideHotkeys } from 'angular2-hotkeys';
 
 export const appConfig: ApplicationConfig = {
   providers: [
-    provideZoneChangeDetection({ eventCoalescing: true }),
+    provideZonelessChangeDetection(),
     provideHotkeys({
       cheatSheetCloseEsc: true,
       cheatSheetDescription: 'Show / hide this help menu',
@@ -111,11 +113,15 @@ export const appConfig: ApplicationConfig = {
 };
 ```
 
+> **This library supports zoneless Angular applications.** Cheatsheet visibility and
+> UI updates are driven by signals (`cheatSheetToggle`, `linkedSignal`, `resource`),
+> so Mousetrap callbacks schedule change detection without `zone.js`.
+
 ### 2. Bind shortcuts & show the cheat sheet
 
 ```ts
 // app.component.ts
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import {
   Hotkey,
   HotkeysCheatsheetComponent,
@@ -131,12 +137,14 @@ import {
     <main>
       <h1>My app</h1>
       <!-- Optional custom title (signal input) -->
-      <hotkeys-cheatsheet title="Keyboard Shortcuts:" />
+      @defer (on idle) {
+        <hotkeys-cheatsheet title="Keyboard Shortcuts:" />
+      }
     </main>
   `,
 })
 export class AppComponent implements OnInit {
-  constructor(private readonly hotkeys: HotkeysService) {}
+  private readonly hotkeys = inject(HotkeysService);
 
   ngOnInit(): void {
     this.hotkeys.add(
@@ -267,14 +275,23 @@ new Hotkey(
 
 | Library version | Angular | Notes |
 | :--- | :--- | :--- |
-| **v22.x** | **Angular 22** | **Current** — standalone, Signals, Nx workspace |
+| **v22.x** | **Angular `>=20 <23`** | **Current** — signal component model, zoneless, `resource` / `linkedSignal`, `@defer` |
 | v20.x | Angular 20 | Standalone + Signals baseline |
 | v16.x | Angular 16 | Ivy-era module API |
 | v15.x | Angular 15 | |
 | v13.x | Angular 13 | (often works on 12) |
 | v2.4.0 | Angular 11 | Legacy line |
 
-Always align the library major with your Angular major when possible.
+### Migrating from the Angular 20 line
+
+1. Bump `angular2-hotkeys` to `^22` (or install from this branch).
+2. Prefer `inject(HotkeysService)` over constructor injection.
+3. Prefer `provideZonelessChangeDetection()` and remove `zone.js` polyfills when ready.
+4. Cheatsheet `title` remains a **signal input** — use `[title]="..."` / `setInput('title', ...)` in tests.
+5. Element-scoped `[hotkeys]` is now a **signal input** (`input()`); rebinds when the bound value changes.
+6. Optional: wrap `<hotkeys-cheatsheet>` in `@defer (on idle)` or rely on the component’s internal `@defer (when helpVisible())`.
+
+See [`RESEARCH.md`](./RESEARCH.md) for the full Angular 22 API inventory and applicability decisions.
 
 ---
 

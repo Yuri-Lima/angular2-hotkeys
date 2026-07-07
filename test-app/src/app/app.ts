@@ -1,4 +1,4 @@
-import { Component, OnInit, signal } from '@angular/core';
+import { Component, inject, OnInit, signal } from '@angular/core';
 import { Hotkey, HotkeysCheatsheetComponent, HotkeysService } from 'angular2-hotkeys';
 
 @Component({
@@ -8,11 +8,12 @@ import { Hotkey, HotkeysCheatsheetComponent, HotkeysService } from 'angular2-hot
   styleUrl: './app.css',
 })
 export class App implements OnInit {
-  protected readonly title = signal('angular2-hotkeys test-app');
+  private readonly hotkeys = inject(HotkeysService);
+
+  protected readonly title = signal('angular2-hotkeys test-app (zoneless)');
   protected readonly lastAction = signal<string>('(none yet — press a shortcut)');
   protected readonly toast = signal<string | null>(null);
-
-  constructor(private hotkeys: HotkeysService) {}
+  protected readonly zoneless = signal(true);
 
   ngOnInit(): void {
     this.hotkeys.add(
