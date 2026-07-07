@@ -61,7 +61,7 @@ describe('HotkeysCheatsheetComponent', () => {
   });
 
   it('should render the title input', () => {
-    component.title = 'My Shortcuts';
+    fixture.componentRef.setInput('title', 'My Shortcuts');
     fixture.detectChanges();
     const title = fixture.nativeElement.querySelector('.cfp-hotkeys-title');
     expect(title.textContent).toContain('My Shortcuts');

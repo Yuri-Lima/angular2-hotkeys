@@ -1,59 +1,123 @@
-# AhkTestApp
+# test-app (ahk-test-app)
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 20.3.2.
+Angular **22** integration / consumer app for [`angular2-hotkeys`](../README.md).
 
-## Development server
+It proves the library works when installed as a real dependency (`"angular2-hotkeys": "file:../dist"`) with:
 
-To start a local development server, run:
+- `provideHotkeys()` in `src/app/app.config.ts`
+- standalone `HotkeysCheatsheetComponent`
+- shortcuts: `?` (cheatsheet), `Esc` (close when enabled), `ctrl+s` / `ctrl+z`
+
+This app is an **Nx project** named `test-app` in the monorepo root (see [`../nx.json`](../nx.json) and [`project.json`](./project.json)). Prefer running it through Nx from the repository root so the library is built first.
+
+| | |
+| --- | --- |
+| **Angular** | `^22.0.5` |
+| **TypeScript** | `~6.0` |
+| **zone.js** | `~0.16` |
+| **Default serve URL** | `http://127.0.0.1:4300/` |
+| **Library dependency** | `file:../dist` (run a library build first) |
+
+## Prerequisites
+
+From the **repository root**:
 
 ```bash
-ng serve
+nvm use                          # Node 22.22+ (see ../.nvmrc)
+npm install --legacy-peer-deps   # workspace (library) deps
+npx nx build angular2-hotkeys    # produces ../dist for this app
 ```
 
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
-
-## Code scaffolding
-
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
+Then install this app’s own dependencies (still required for the local Angular CLI/Vite toolchain):
 
 ```bash
-ng generate component component-name
+cd test-app
+npm install --legacy-peer-deps
 ```
 
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
+## Development server (recommended: Nx)
+
+From the repository root:
 
 ```bash
-ng generate --help
+npx nx serve test-app
+# or: make serve-test-app
 ```
+
+Nx builds `angular2-hotkeys` when needed, then serves this app on **port 4300**.
+
+### Local CLI (optional)
+
+If you already built the library and installed `test-app` deps:
+
+```bash
+cd test-app
+npx ng serve --port 4300 --host 127.0.0.1 --configuration development
+```
+
+Open `http://127.0.0.1:4300/`. The app reloads on source changes.
+
+> **Note:** Vite prebundling excludes `angular2-hotkeys` (see `angular.json` `serve.options.prebundle.exclude`) so the app and library share a single `@angular/core` instance.
 
 ## Building
 
-To build the project run:
+From the repository root:
 
 ```bash
-ng build
+npx nx build test-app
 ```
 
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
-
-## Running unit tests
-
-To execute unit tests with the [Karma](https://karma-runner.github.io) test runner, use the following command:
+Or locally after a library build:
 
 ```bash
-ng test
+cd test-app
+npx ng build --configuration production
 ```
 
-## Running end-to-end tests
+Output: `test-app/dist/ahk-test-app/`.
 
-For end-to-end (e2e) testing, run:
+## Unit tests
+
+From the repository root:
 
 ```bash
-ng e2e
+npx nx test test-app
 ```
 
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
+Or:
 
-## Additional Resources
+```bash
+cd test-app
+npx ng test --no-watch --browsers=ChromeHeadless
+```
 
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+## Browser proof (integration)
+
+With the app served on `:4300`, from the repository root:
+
+```bash
+node scripts/prove-test-app.mjs
+# or: make prove
+```
+
+Playwright exercises `?`, `Esc`, and `ctrl+s` and writes screenshots under `ui/`.
+
+## Project layout
+
+```
+test-app/
+  project.json          # Nx targets (build / serve / test)
+  angular.json          # Angular application config
+  package.json          # Angular 22 consumer deps + file:../dist
+  src/
+    app/
+      app.config.ts     # provideHotkeys(...)
+      app.ts            # registers demo hotkeys
+      app.html
+    main.ts
+```
+
+## Related docs
+
+- Library README: [../README.md](../README.md)
+- Migration dashboard: [../ui/index.html](../ui/index.html) (`make ui` from the repo root)

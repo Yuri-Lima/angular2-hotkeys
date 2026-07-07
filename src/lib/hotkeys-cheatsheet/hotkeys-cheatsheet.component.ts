@@ -1,4 +1,4 @@
-import { Component, computed, effect, Input, signal, untracked } from '@angular/core';
+import { Component, computed, effect, input, signal, untracked } from '@angular/core';
 import { Hotkey } from '../hotkey.model';
 import { HotkeysService } from '../hotkeys.service';
 
@@ -9,7 +9,9 @@ import { HotkeysService } from '../hotkeys.service';
   styleUrls: ['./hotkeys-cheatsheet.component.css'],
 })
 export class HotkeysCheatsheetComponent {
-  @Input() title = 'Keyboard Shortcuts:';
+  /** Overlay heading — set via `[title]` on the host element. */
+  readonly title = input('Keyboard Shortcuts:');
+
 
   /** Local list of hotkeys shown in the overlay (updated when the sheet opens). */
   readonly hotkeys = signal<Hotkey[]>([]);

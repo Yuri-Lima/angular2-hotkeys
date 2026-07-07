@@ -1,0 +1,64 @@
+{
+  "name": "test-app",
+  "$schema": "../node_modules/nx/schemas/project-schema.json",
+  "projectType": "application",
+  "root": "test-app",
+  "sourceRoot": "test-app/src",
+  "prefix": "app",
+  "tags": ["scope:demo", "type:app", "framework:angular"],
+  "implicitDependencies": ["angular2-hotkeys"],
+  "targets": {
+    "build": {
+      "executor": "nx:run-commands",
+      "outputs": ["{workspaceRoot}/test-app/dist"],
+      "dependsOn": [
+        {
+          "target": "build",
+          "projects": "angular2-hotkeys"
+        }
+      ],
+      "options": {
+        "commands": [
+          "npm install --no-fund --no-audit",
+          "npx ng build --configuration production"
+        ],
+        "cwd": "test-app",
+        "parallel": false
+      }
+    },
+    "serve": {
+      "executor": "nx:run-commands",
+      "dependsOn": [
+        {
+          "target": "build",
+          "projects": "angular2-hotkeys"
+        }
+      ],
+      "options": {
+        "commands": [
+          "npm install --no-fund --no-audit",
+          "npx ng serve --port 4300 --host 127.0.0.1 --configuration development"
+        ],
+        "cwd": "test-app",
+        "parallel": false
+      }
+    },
+    "test": {
+      "executor": "nx:run-commands",
+      "dependsOn": [
+        {
+          "target": "build",
+          "projects": "angular2-hotkeys"
+        }
+      ],
+      "options": {
+        "commands": [
+          "npm install --no-fund --no-audit",
+          "npx ng test --no-watch --browsers=ChromeHeadless"
+        ],
+        "cwd": "test-app",
+        "parallel": false
+      }
+    }
+  }
+}

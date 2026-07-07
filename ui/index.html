@@ -3,23 +3,24 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>angular2-hotkeys · Angular 16 → 20 Migration Dashboard</title>
+  <title>angular2-hotkeys · Angular 22 + Nx Migration Dashboard</title>
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
   <a class="skip" href="#main">Skip to content</a>
   <header class="hero">
-    <p class="eyebrow">Library modernization · G13</p>
+    <p class="eyebrow">Library modernization · Angular 22 + Nx</p>
     <h1>angular2-hotkeys</h1>
     <p class="lead">
-      Full migration from <strong>Angular 16</strong> to <strong>Angular 20</strong>:
-      standalone APIs, Signals, ESM Mousetrap, ESLint, and an integration test-app.
+      Migrated from <strong>Angular 20</strong> to <strong>Angular 22</strong> and managed with
+      <strong>Nx 23.1</strong>: standalone APIs, Signals, signal <code>input()</code>,
+      TypeScript 6, zone.js 0.16, and an integration test-app.
     </p>
     <div class="badges" role="list">
-      <span class="badge ok" role="listitem">Build green</span>
+      <span class="badge ok" role="listitem">Angular 22.0.5</span>
+      <span class="badge ok" role="listitem">Nx 23.1</span>
       <span class="badge ok" role="listitem">34 unit tests</span>
       <span class="badge ok" role="listitem">~95% line coverage</span>
-      <span class="badge ok" role="listitem">Phase 8 browser proof</span>
     </div>
   </header>
 
@@ -28,13 +29,13 @@
       <h2 id="phases-title">Migration phase tracker</h2>
       <ol class="phases">
         <li class="done"><span class="n">1</span><div><strong>Tooling cleanup</strong><p>Remove TSLint / Protractor / Codelyzer · ESLint + strictTemplates</p></div></li>
-        <li class="done"><span class="n">2</span><div><strong>Angular 16 → 20</strong><p>@angular/* ^20, TypeScript 5.8, zone.js 0.15, ng-packagr 20</p></div></li>
-        <li class="done"><span class="n">3</span><div><strong>Standalone + provideHotkeys()</strong><p>Directive & cheatsheet standalone · deprecated HotkeyModule.forRoot kept</p></div></li>
-        <li class="done"><span class="n">4</span><div><strong>Signals migration</strong><p>cheatSheetToggle signal · @for / [class.in] · no async pipe</p></div></li>
-        <li class="done"><span class="n">5</span><div><strong>Mousetrap ESM</strong><p>default import, esModuleInterop — no allowedCommonJsDependencies hack</p></div></li>
-        <li class="done"><span class="n">6</span><div><strong>Test suite</strong><p>Service / directive / component / module · ≥80% coverage</p></div></li>
-        <li class="done"><span class="n">7</span><div><strong>Packaging</strong><p>peerDependencies, sideEffects:false, exports map via ng-packagr</p></div></li>
-        <li class="done"><span class="n">8</span><div><strong>Integration test-app</strong><p>provideHotkeys in app.config · ?, Esc, ctrl+s proven in browser</p></div></li>
+        <li class="done"><span class="n">2</span><div><strong>Angular 16 → 20</strong><p>Standalone + Signals + ESM Mousetrap baseline</p></div></li>
+        <li class="done"><span class="n">3</span><div><strong>Angular 20 → 22</strong><p>@angular/* 22.0.5 · TypeScript 6.0 · zone.js 0.16 · ng-packagr 22 · Node 22.22+</p></div></li>
+        <li class="done"><span class="n">4</span><div><strong>Nx workspace</strong><p>nx / @nx/angular 23.1.0-beta.7 · project graph for lib + test-app</p></div></li>
+        <li class="done"><span class="n">5</span><div><strong>Signals input()</strong><p>Cheatsheet title uses signal input · setInput in tests</p></div></li>
+        <li class="done"><span class="n">6</span><div><strong>Test suite</strong><p>Service / directive / component / module · ≥80% coverage · 34/34 green</p></div></li>
+        <li class="done"><span class="n">7</span><div><strong>Packaging</strong><p>peerDependencies ^22 · sideEffects:false · exports via ng-packagr</p></div></li>
+        <li class="done"><span class="n">8</span><div><strong>Integration test-app</strong><p>Angular 22 consumer · provideHotkeys · ?, Esc, ctrl+s</p></div></li>
       </ol>
     </section>
 
@@ -182,7 +183,7 @@ this.cheatSheetToggle.set(false);</code></pre>
   </main>
 
   <footer>
-    <p>angular2-hotkeys v20 · Angular 20 standalone + signals · MIT</p>
+    <p>angular2-hotkeys v22 · Angular 22 + Nx 23.1 · MIT</p>
   </footer>
   <script src="app.js"></script>
 </body>

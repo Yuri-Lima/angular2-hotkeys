@@ -1,16 +1,21 @@
 {
   "name": "angular2-hotkeys",
-  "version": "20.0.0",
+  "version": "22.0.0",
   "scripts": {
-    "build": "ng build angular2-hotkeys",
-    "build:release": "ng build angular2-hotkeys --configuration production",
-    "build:watch": "ng build angular2-hotkeys --watch",
+    "nx": "nx",
+    "build": "nx build angular2-hotkeys",
+    "build:release": "nx build angular2-hotkeys --configuration=production",
+    "build:watch": "nx build angular2-hotkeys --watch",
     "ng": "ng",
-    "lint": "ng lint",
+    "lint": "nx lint angular2-hotkeys",
     "release": "npm run build:release && npm publish dist/",
     "release:beta": "npm run build:release && npm publish dist/ --tag beta",
-    "start": "ng serve",
-    "test": "ng test --no-watch --browsers=ChromeHeadless --code-coverage"
+    "start": "nx serve test-app",
+    "test": "nx test angular2-hotkeys",
+    "test:test-app": "nx test test-app",
+    "graph": "nx graph",
+    "affected": "nx affected",
+    "prove": "node scripts/prove-test-app.mjs"
   },
   "license": "MIT",
   "repository": {
@@ -26,40 +31,53 @@
     "angular2",
     "hotkeys",
     "keyboard",
-    "shortcut"
+    "shortcut",
+    "nx"
   ],
   "bugs": {
     "url": "https://github.com/Yuri-Lima/angular2-hotkeys/issues"
   },
   "sideEffects": false,
+  "engines": {
+    "node": "^22.22.3 || ^24.15.0 || >=26.0.0"
+  },
   "dependencies": {
     "mousetrap": "^1.6.5",
     "tslib": "^2.8.0"
   },
   "peerDependencies": {
-    "@angular/common": "^20.0.0",
-    "@angular/core": "^20.0.0",
+    "@angular/common": "^22.0.0",
+    "@angular/core": "^22.0.0",
     "rxjs": "^7.0.0"
   },
   "devDependencies": {
-    "@angular-devkit/build-angular": "^20.0.0",
-    "@angular-devkit/core": "^20.0.0",
-    "@angular-eslint/builder": "^20.0.0",
-    "@angular-eslint/eslint-plugin": "^20.0.0",
-    "@angular-eslint/eslint-plugin-template": "^20.0.0",
-    "@angular-eslint/schematics": "^20.0.0",
-    "@angular-eslint/template-parser": "^20.0.0",
-    "@angular/animations": "^20.0.0",
-    "@angular/cli": "^20.0.0",
-    "@angular/common": "^20.0.0",
-    "@angular/compiler": "^20.0.0",
-    "@angular/compiler-cli": "^20.0.0",
-    "@angular/core": "^20.0.0",
-    "@angular/forms": "^20.0.0",
-    "@angular/language-service": "^20.0.0",
-    "@angular/platform-browser": "^20.0.0",
-    "@angular/platform-browser-dynamic": "^20.0.0",
-    "@angular/router": "^20.0.0",
+    "@angular-devkit/build-angular": "^22.0.5",
+    "@angular-devkit/core": "^22.0.5",
+    "@angular-devkit/schematics": "^22.0.5",
+    "@angular-eslint/builder": "^22.0.0",
+    "@angular-eslint/eslint-plugin": "^22.0.0",
+    "@angular-eslint/eslint-plugin-template": "^22.0.0",
+    "@angular-eslint/schematics": "^22.0.0",
+    "@angular-eslint/template-parser": "^22.0.0",
+    "@angular/animations": "^22.0.5",
+    "@angular/build": "^22.0.5",
+    "@angular/cli": "^22.0.5",
+    "@angular/common": "^22.0.5",
+    "@angular/compiler": "^22.0.5",
+    "@angular/compiler-cli": "^22.0.5",
+    "@angular/core": "^22.0.5",
+    "@angular/forms": "^22.0.5",
+    "@angular/language-service": "^22.0.5",
+    "@angular/platform-browser": "^22.0.5",
+    "@angular/platform-browser-dynamic": "^22.0.5",
+    "@angular/router": "^22.0.5",
+    "@nx/angular": "23.1.0-beta.7",
+    "@nx/devkit": "23.1.0-beta.7",
+    "@nx/eslint": "23.1.0-beta.7",
+    "@nx/eslint-plugin": "23.1.0-beta.7",
+    "@nx/js": "23.1.0-beta.7",
+    "@nx/workspace": "23.1.0-beta.7",
+    "@schematics/angular": "^22.0.5",
     "@types/jasmine": "~5.1.0",
     "@types/mousetrap": "^1.6.15",
     "@types/node": "^22.10.0",
@@ -72,10 +90,11 @@
     "karma-coverage": "~2.2.1",
     "karma-jasmine": "~5.1.0",
     "karma-jasmine-html-reporter": "^2.1.0",
-    "ng-packagr": "^20.0.0",
+    "ng-packagr": "^22.0.1",
+    "nx": "23.1.0-beta.7",
     "rxjs": "~7.8.1",
     "ts-node": "~10.9.2",
-    "typescript": "~5.8.2",
-    "zone.js": "~0.15.0"
+    "typescript": "~6.0.2",
+    "zone.js": "~0.16.0"
   }
 }

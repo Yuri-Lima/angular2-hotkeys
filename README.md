@@ -1,139 +1,236 @@
 # angular2-hotkeys
-Angular 16 and Ivy Compatible. Older versions might work but isn't officially tested.
+
+Angular keyboard shortcuts library built on [Mousetrap](https://craig.is/killing/mice), with **standalone APIs**, **Signals**, and an **[Nx](https://nx.dev) workspace**.
+
+| | |
+| --- | --- |
+| **Library version** | `22.0.0` |
+| **Angular peer** | `^22.0.0` |
+| **Nx** | `23.1` (`nx` / `@nx/angular` — latest line that supports Angular 22) |
+| **TypeScript** | `~6.0` |
+| **zone.js** | `~0.16` |
+| **Node** | `^22.22.3 \|\| ^24.15.0 \|\| >=26` (see [`.nvmrc`](.nvmrc)) |
 
 ## Versions compatibility
-v2.4.0 - Angular 11 (most likely lower Angular versions)
 
-v13.*.* - Angular 13 (most likely Angular 12)
-
-v15.*.* - Angular 15
-
-v16.*.* - Angular 16
+| Library | Angular |
+| --- | --- |
+| v2.4.0 | Angular 11 (most likely lower Angular versions) |
+| v13.\*.\* | Angular 13 (most likely Angular 12) |
+| v15.\*.\* | Angular 15 |
+| v16.\*.\* | Angular 16 |
+| v20.\*.\* | Angular 20 (standalone + signals) |
+| **v22.\*.\*** | **Angular 22 + Nx workspace (current)** |
 
 ## Installation
 
-To install this library, run:
+```bash
+npm install angular2-hotkeys --save
+```
+
+Peer dependencies (install if your app does not already have them):
 
 ```bash
-$ npm install angular2-hotkeys --save
+npm install @angular/core@^22 @angular/common@^22 rxjs@^7
 ```
 
-## Examples
-First, import the HotkeyModule into your root AppModule
+## Quick start (recommended — Angular 22 standalone)
+
+Register providers in `app.config.ts`, then inject `HotkeysService` and import the cheatsheet component where needed.
 
 ```typescript
-import {HotkeyModule} from 'angular2-hotkeys';
+// app.config.ts
+import { ApplicationConfig, provideZoneChangeDetection } from '@angular/core';
+import { provideHotkeys } from 'angular2-hotkeys';
+
+export const appConfig: ApplicationConfig = {
+  providers: [
+    provideZoneChangeDetection({ eventCoalescing: true }),
+    provideHotkeys({
+      cheatSheetCloseEsc: true,
+      cheatSheetDescription: 'Show / hide this help menu',
+    }),
+  ],
+};
 ```
 
-Then, add HotkeyModule.forRoot() to your AppModule's import array
+```typescript
+// app.component.ts
+import { Component, OnInit } from '@angular/core';
+import { Hotkey, HotkeysCheatsheetComponent, HotkeysService } from 'angular2-hotkeys';
+
+@Component({
+  selector: 'app-root',
+  standalone: true,
+  imports: [HotkeysCheatsheetComponent],
+  template: `
+    <h1>My app</h1>
+    <hotkeys-cheatsheet title="Keyboard Shortcuts:" />
+  `,
+})
+export class AppComponent implements OnInit {
+  constructor(private hotkeys: HotkeysService) {}
+
+  ngOnInit(): void {
+    this.hotkeys.add(
+      new Hotkey(
+        'meta+shift+g',
+        (event: KeyboardEvent): boolean => {
+          console.log('Typed hotkey');
+          return false; // Prevent bubbling
+        },
+        undefined,
+        'Send a secret message to the console.',
+      ),
+    );
+
+    // Multiple combos for one callback
+    this.hotkeys.add(
+      new Hotkey(
+        ['meta+shift+g', 'alt+shift+s'],
+        (event: KeyboardEvent, combo: string) => {
+          console.log('Combo: ' + combo);
+          const e = event as import('angular2-hotkeys').ExtendedKeyboardEvent;
+          e.returnValue = false;
+          return e;
+        },
+      ),
+    );
+  }
+}
+```
+
+Your callback must return either a `boolean` or an `ExtendedKeyboardEvent`.
+
+For the full list of supported key combinations, see <https://craig.is/killing/mice>.
+
+## Cheat sheet
+
+Add the standalone cheatsheet component to a top-level template:
+
+```html
+<hotkeys-cheatsheet></hotkeys-cheatsheet>
+<!-- Optional custom title (signal input) -->
+<hotkeys-cheatsheet title="Hotkeys Rock!"></hotkeys-cheatsheet>
+<!-- Default title: 'Keyboard Shortcuts:' -->
+```
+
+The `HotkeysService` registers the `?` key combo to toggle the sheet (unless disabled via options).
+
+**Note:** Only hotkeys with a **description** appear on the cheat sheet. Pass a `string` or `() => string` as the fourth constructor argument for dynamic descriptions.
+
+The third parameter (`allowIn`) can list tag names (`'INPUT'`, `'SELECT'`, `'TEXTAREA'`) where the combo is allowed to fire.
+
+### Options (`IHotkeyOptions`)
+
+Pass options to `provideHotkeys(options)` (or the deprecated `HotkeyModule.forRoot(options)`):
 
 ```typescript
+export interface IHotkeyOptions {
+  /** Disable the cheat sheet popover dialog? Default: false */
+  disableCheatSheet?: boolean;
+  /** Key combination to trigger the cheat sheet. Default: '?' */
+  cheatSheetHotkey?: string;
+  /** Also use ESC to close the cheat sheet. Default: false */
+  cheatSheetCloseEsc?: boolean;
+  /** Description for the ESC key on the sheet. Default: 'Hide this help menu' */
+  cheatSheetCloseEscDescription?: string;
+  /** Description for the cheat-sheet toggle key. Default: 'Show / hide this help menu' */
+  cheatSheetDescription?: string;
+}
+```
+
+## Legacy NgModule usage (deprecated)
+
+`HotkeyModule` / `HotkeyModule.forRoot()` remain available for older module-based apps but are **deprecated**. Prefer `provideHotkeys()` for Angular 22.
+
+```typescript
+import { HotkeyModule } from 'angular2-hotkeys';
+
 @NgModule({
-    imports : [CommonModule, HotkeyModule.forRoot(), ...],
+  imports: [CommonModule, HotkeyModule.forRoot({ cheatSheetCloseEsc: true })],
 })
 export class AppModule {}
 ```
 
-If you have any sub/feature modules that also use hotkeys, import the HotkeyModule (but NOT .forRoot())
-```typescript
-@NgModule({
-    imports : [CommonModule, HotkeyModule, ...],
-})
-export class SharedModule {}
-```
+Feature modules that need the directive/cheatsheet should import `HotkeyModule` **without** `.forRoot()`.
 
-Then inject the service into your constructor and add a new hotkey
+## Workspace (Nx)
 
-```typescript
-constructor(private _hotkeysService: HotkeysService) {
-    this._hotkeysService.add(new Hotkey('meta+shift+g', (event: KeyboardEvent): boolean => {
-        console.log('Typed hotkey');
-        return false; // Prevent bubbling
-    }));
-}
-```
-It also handles passing an array of hotkey combinations for a single callback
-```typescript
-this._hotkeysService.add(new Hotkey(['meta+shift+g', 'alt+shift+s'], (event: KeyboardEvent, combo: string): ExtendedKeyboardEvent => {
-    console.log('Combo: ' + combo); // 'Combo: meta+shift+g' or 'Combo: alt+shift+s'
-    let e: ExtendedKeyboardEvent = event;
-    e.returnValue = false; // Prevent bubbling
-    return e;
-}));
-```
+This repository is an [Nx](https://nx.dev) workspace. The publishable library and the demo consumer app are separate projects in the graph.
 
-Your callback must return either a boolean or an "ExtendedKeyboardEvent".
-
-For more information on what hotkeys can be used, check out <https://craig.is/killing/mice>
-
-This library is a work in progress and any issues/pull-requests are welcomed!
-Based off of the [angular-hotkeys library](https://github.com/chieffancypants/angular-hotkeys)
-
-## Cheat Sheet
-
-To enable the cheat sheet, simply add `<hotkeys-cheatsheet></hotkeys-cheatsheet>` to your top level component template.
-The `HotkeysService` will automatically register the `?` key combo to toggle the cheat sheet.
-
-**NB!** Only hotkeys that have a description will apear on the cheat sheet. The Hotkey constructor takes a description as
-an optional fourth parameter as a string or optionally as a function for dynamic descriptions.
-
-```typescript
-this._hotkeysService.add(new Hotkey('meta+shift+g', (event: KeyboardEvent): boolean => {
-    console.log('Secret message');
-    return false;
-}, undefined, 'Send a secret message to the console.'));
-```
-
-The third parameter, given as `undefined`, can be used to allow the Hotkey to fire in INPUT, SELECT or TEXTAREA tags.
-
-### Cheat Sheet Customization
-
-1. You can now pass in custom options in `HotkeyModule.forRoot(options: IHotkeyOptions)`.
-
-```typescript
-export interface IHotkeyOptions {
-  /**
-   * Disable the cheat sheet popover dialog? Default: false
-   */
-  disableCheatSheet?: boolean;
-  /**
-   * Key combination to trigger the cheat sheet. Default: '?'
-   */
-  cheatSheetHotkey?: string;
-  /**
-   * Use also ESC for closing the cheat sheet. Default: false
-   */
-  cheatSheetCloseEsc?: boolean;
-  /**
-   * Description for the ESC key for closing the cheat sheet (if enabed). Default: 'Hide this help menu'
-   */
-  cheatSheetCloseEscDescription?: string;
-  /**
-   * Description for the cheat sheet hot key in the cheat sheet. Default: 'Show / hide this help menu'
-   */
-  cheatSheetDescription?: string;
-};
-```
-
-2. You can also customize the title of the cheat sheet component.
-
-```html
-<hotkeys-cheatsheet title="Hotkeys Rock!"></hotkeys-cheatsheet>
-<!-- Default: 'Keyboard Shortcuts:' -->
-```
-
-## TODO
-1. Create unit and E2E tests
-
-## Development
-
-To generate all `*
-}.js`, `*.js.map` and `*.d.ts` files:
+| Project | Type | Main targets |
+| --- | --- | --- |
+| `angular2-hotkeys` | library | `build`, `test`, `lint` |
+| `test-app` | application | `build`, `serve`, `test` (depends on library `build`) |
 
 ```bash
-$ npm run tsc
+# Node 22.22+ required for Angular 22
+nvm use   # reads .nvmrc
+
+npm install --legacy-peer-deps
+
+# Library
+npx nx build angular2-hotkeys
+npx nx test angular2-hotkeys
+npx nx lint angular2-hotkeys
+
+# Demo consumer (builds the library first when needed)
+npx nx serve test-app
+# → http://127.0.0.1:4300/
+
+# Task graph
+npx nx graph
 ```
+
+### Makefile shortcuts
+
+| Command | Action |
+| --- | --- |
+| `make build` | Production library build via Nx |
+| `make test` | Library unit tests (ChromeHeadless + coverage) |
+| `make lint` | ESLint via Nx |
+| `make serve-test-app` | Serve the Angular 22 demo app |
+| `make prove` | Playwright browser proof (`?` / Esc / ctrl+s) |
+| `make graph` | Open the Nx project graph |
+| `make ui` | Serve the local migration dashboard (`ui/`) |
+
+### Package scripts
+
+| Script | Description |
+| --- | --- |
+| `npm run build` | `nx build angular2-hotkeys` |
+| `npm run build:release` | Production build for publish |
+| `npm test` | `nx test angular2-hotkeys` |
+| `npm run lint` | `nx lint angular2-hotkeys` |
+| `npm start` | `nx serve test-app` |
+| `npm run graph` | `nx graph` |
+| `npm run prove` | Browser integration proof script |
+
+## Development & testing
+
+Library unit tests use Karma + Jasmine (34 specs, coverage thresholds in `karma.conf.js`). The `test-app/` project is an Angular **22** consumer that depends on the built package at `dist/` (`file:../dist`).
+
+```bash
+npx nx test angular2-hotkeys          # library
+npx nx test test-app                  # consumer app tests
+node scripts/prove-test-app.mjs       # requires test-app served on :4300
+```
+
+## Public API
+
+Exported from `angular2-hotkeys`:
+
+- `provideHotkeys()` — standalone environment providers
+- `HotkeysService` — bind / unbind / query hotkeys; `cheatSheetToggle` signal
+- `Hotkey` / `ExtendedKeyboardEvent` — model types
+- `HotkeysDirective` — element-scoped bindings
+- `HotkeysCheatsheetComponent` — standalone overlay (`title` signal input)
+- `IHotkeyOptions` / `HotkeyOptions` — options token
+- `HotkeyModule` — **deprecated** NgModule bridge
 
 ## License
 
-MIT © [Nick Richardson](nick.richardson@mediapixeldesign.com)
+MIT © [Nick Richardson](mailto:nick.richardson@mediapixeldesign.com)
+
+Based on the [angular-hotkeys](https://github.com/chieffancypants/angular-hotkeys) library. Issues and pull requests are welcome.
