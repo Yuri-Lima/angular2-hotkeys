@@ -7,6 +7,7 @@
 
 <p align="center">
   <a href="https://www.npmjs.com/package/angular2-hotkeys"><img alt="npm version" src="https://img.shields.io/badge/npm-v22.0.0-CB3837?style=flat-square&logo=npm" /></a>
+  <a href="https://pnpm.io/"><img alt="pnpm" src="https://img.shields.io/badge/package%20manager-pnpm-F69220?style=flat-square&logo=pnpm&logoColor=white" /></a>
   <a href="https://angular.dev/"><img alt="Angular" src="https://img.shields.io/badge/Angular-%3E%3D20%20%3C23-DD0031?style=flat-square&logo=angular&logoColor=white" /></a>
   <a href="https://angular.dev/guide/zoneless"><img alt="Zoneless" src="https://img.shields.io/badge/zoneless-supported-22c55e?style=flat-square" /></a>
   <a href="https://nx.dev/"><img alt="Nx" src="https://img.shields.io/badge/Nx-23.1-143055?style=flat-square&logo=nx&logoColor=white" /></a>
@@ -26,8 +27,9 @@ Compiling on Angular 22 is not enough — this line **uses** Angular 22 APIs: `i
 | **Package** | [`angular2-hotkeys@22.0.0`](https://www.npmjs.com/package/angular2-hotkeys) |
 | **Peers** | `@angular/core` · `@angular/common` **`>=20.0.0 <23.0.0`** · `rxjs` `^7` |
 | **Runtime** | Node `^22.22.3 \|\| ^24.15.0 \|\| >=26` · see [`.nvmrc`](.nvmrc) |
+| **Package manager** | **pnpm** only (`packageManager` in `package.json` · [`pnpm-lock.yaml`](./pnpm-lock.yaml) · [`pnpm-workspace.yaml`](./pnpm-workspace.yaml)) |
 | **zone.js** | **Not required** — library UI is signal-driven |
-| **Demo** | [`test-app/`](./test-app) · zoneless · `pnpm exec nx serve test-app` → `http://127.0.0.1:4300/` |
+| **Demo** | [`test-app/`](./test-app) · zoneless · `pnpm exec nx serve test-app` (or `pnpm start`) → `http://127.0.0.1:4300/` |
 | **Dashboard** | [`ui/`](./ui) · `make ui` → `http://localhost:8765/` |
 | **Research** | [`RESEARCH.md`](./RESEARCH.md) — 17 Angular 21/22 APIs evaluated |
 
@@ -466,31 +468,38 @@ This repository is an [Nx](https://nx.dev) monorepo.
 git clone https://github.com/Yuri-Lima/angular2-hotkeys.git
 cd angular2-hotkeys
 nvm use                          # Node version from .nvmrc (≥ 22.22.3)
-corepack enable                  # uses packageManager from package.json
-pnpm install
+corepack enable                  # activates pnpm from packageManager field
+pnpm install                     # reads pnpm-lock.yaml (never use npm install here)
 ```
 
-> This repository uses **pnpm only** (`packageManager` + `pnpm-lock.yaml`). Do not commit `package-lock.json` / `yarn.lock`.
+> **pnpm only.** This workspace is configured with `packageManager`, `pnpm-lock.yaml`, and `pnpm-workspace.yaml`. Do **not** commit `package-lock.json` or `yarn.lock`. Prefer `pnpm exec …` over bare `npx` so the local toolchain is used.
 
 ### Common commands
 
 ```bash
-# Library
+# Library (also: make build | make test | make lint)
 pnpm exec nx build angular2-hotkeys --configuration=production
-pnpm exec nx test angular2-hotkeys     # Karma + Jasmine, ChromeHeadless, coverage ≥ 85%
+pnpm exec nx test angular2-hotkeys     # Karma + Jasmine, ChromeHeadless, coverage gate ≥ 85%
 pnpm exec nx lint angular2-hotkeys
 
-# Zoneless demo app (builds the library when needed)
-pnpm exec nx serve test-app            # http://127.0.0.1:4300/
+# Or the root package.json scripts
+pnpm run build
+pnpm test
+pnpm run lint
+pnpm run build:release             # production library build (publish path)
 
-# Modernization dashboard
-make ui                          # http://localhost:8765/
+# Zoneless demo app (depends on library build; reinstalls test-app via pnpm)
+pnpm exec nx serve test-app        # http://127.0.0.1:4300/
+# equivalent: pnpm start  |  make serve-test-app
 
-# Browser integration proof (?, Esc, ctrl+s)
-make prove
+# Modernization dashboard (stdlib static server)
+make ui                            # http://localhost:8765/
 
-# Project graph
-pnpm exec nx graph
+# Browser integration proof — requires test-app already serving on :4300
+make prove                         # or: pnpm run prove
+
+# Project graph (opens the Nx UI)
+pnpm exec nx graph                 # or: make graph | pnpm run graph
 ```
 
 ### Quality bar
@@ -499,12 +508,12 @@ pnpm exec nx graph
 | :--- | :--- |
 | Unit tests | **45** specs (service, directive, cheatsheet, providers, **zoneless suite**) |
 | Coverage **gate** (enforced) | `karma.conf.js` → statements / lines / functions **≥ 85%**, branches **≥ 65%** (build fails if lower) |
-| Coverage **measured** (last local run) | Karma `text-summary` after `nx test angular2-hotkeys` (45 SUCCESS): **statements 94.81%** (201/212), **lines 94.55%** (191/202), **functions 97.77%** (44/45), **branches 72.3%** (47/65) |
-| Production build | `nx build angular2-hotkeys --configuration=production` clean |
-| Integration | `make prove` — Playwright `?` / `Esc` / `ctrl+s` against zoneless test-app |
-| Dashboard | `make ui` — research inventory, before/after diffs, live key demo |
+| Coverage **measured** (last local run) | Karma `text-summary` after `pnpm exec nx test angular2-hotkeys` (45 SUCCESS): **statements 94.71%** (197/208), **lines 94.44%** (187/198), **functions 97.56%** (40/41), **branches 72.72%** (48/66) |
+| Production build | `pnpm exec nx build angular2-hotkeys --configuration=production` clean |
+| Integration | `make prove` / `pnpm run prove` — Playwright `?` / `Esc` / `ctrl+s` against zoneless test-app on **:4300** |
+| Dashboard | `make ui` — research inventory, before/after diffs, live key demo on **:8765** |
 
-> **Gate vs measured:** “≥ 85%” is the **threshold in config**. The **94.81% / 94.55%** figures are the **actual** Karma report from a successful run — re-run `pnpm exec nx test angular2-hotkeys` and read the “Coverage summary” block for the current numbers. Do not treat a rounded “~95%” as the gate.
+> **Gate vs measured:** “≥ 85%” is the **threshold in config**. The **94.71% / 94.44%** figures are the **actual** Karma report from a successful run — re-run `pnpm exec nx test angular2-hotkeys` and read the “Coverage summary” block for the current numbers. Do not treat a rounded “~95%” as the gate.
 
 ---
 
@@ -512,27 +521,27 @@ pnpm exec nx graph
 
 ### pnpm scripts (root)
 
-| Script | Description |
-| :--- | :--- |
-| `pnpm start` | Serve the zoneless demo app (`nx serve test-app`) |
-| `pnpm run build` | Build the library |
-| `pnpm run build:release` | Production build for publish |
-| `pnpm test` | Library unit tests (includes zoneless suite) |
-| `pnpm run lint` | ESLint via Nx |
-| `pnpm run graph` | Open the Nx graph |
-| `pnpm run prove` | Browser integration proof against `:4300` |
+| Script | Description | Verified |
+| :--- | :--- | :--- |
+| `pnpm start` | Serve the zoneless demo (`nx serve test-app` → `:4300`) | ✅ |
+| `pnpm run build` | Build the library (default configuration) | ✅ |
+| `pnpm run build:release` | Production library build for publish | ✅ |
+| `pnpm test` | Library unit tests (includes zoneless suite) | ✅ |
+| `pnpm run lint` | ESLint via Nx | ✅ |
+| `pnpm run graph` | Open the Nx project graph UI | (opens browser) |
+| `pnpm run prove` | Browser integration proof against `:4300` (app must be serving) | ✅ |
 
 ### Makefile
 
-| Target | Action |
-| :--- | :--- |
-| `make build` | Production library build |
-| `make test` | Library tests + coverage |
-| `make lint` | Lint the library |
-| `make serve-test-app` | Zoneless demo on port **4300** |
-| `make prove` | Playwright proof |
-| `make graph` | Nx graph |
-| `make ui` | Modernization dashboard on port **8765** |
+| Target | Action | Equivalent |
+| :--- | :--- | :--- |
+| `make build` | Production library build | `pnpm exec nx build angular2-hotkeys --configuration=production` |
+| `make test` | Library tests + coverage | `pnpm exec nx test angular2-hotkeys` |
+| `make lint` | Lint the library | `pnpm exec nx lint angular2-hotkeys` |
+| `make serve-test-app` | Zoneless demo on port **4300** | `pnpm exec nx serve test-app` / `pnpm start` |
+| `make prove` | Playwright proof (`?` / `Esc` / `ctrl+s`) | `pnpm run prove` |
+| `make graph` | Nx graph | `pnpm exec nx graph` |
+| `make ui` | Modernization dashboard on port **8765** | `bash scripts/open-ui.sh` |
 
 ---
 
