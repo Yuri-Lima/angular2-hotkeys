@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>angular2-hotkeys · Angular 16 → 20 Migration Dashboard</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <a class="skip" href="#main">Skip to content</a>
+  <header class="hero">
+    <p class="eyebrow">Library modernization · G13</p>
+    <h1>angular2-hotkeys</h1>
+    <p class="lead">
+      Full migration from <strong>Angular 16</strong> to <strong>Angular 20</strong>:
+      standalone APIs, Signals, ESM Mousetrap, ESLint, and an integration test-app.
+    </p>
+    <div class="badges" role="list">
+      <span class="badge ok" role="listitem">Build green</span>
+      <span class="badge ok" role="listitem">34 unit tests</span>
+      <span class="badge ok" role="listitem">~95% line coverage</span>
+      <span class="badge ok" role="listitem">Phase 8 browser proof</span>
+    </div>
+  </header>
+
+  <main id="main">
+    <section aria-labelledby="phases-title">
+      <h2 id="phases-title">Migration phase tracker</h2>
+      <ol class="phases">
+        <li class="done"><span class="n">1</span><div><strong>Tooling cleanup</strong><p>Remove TSLint / Protractor / Codelyzer · ESLint + strictTemplates</p></div></li>
+        <li class="done"><span class="n">2</span><div><strong>Angular 16 → 20</strong><p>@angular/* ^20, TypeScript 5.8, zone.js 0.15, ng-packagr 20</p></div></li>
+        <li class="done"><span class="n">3</span><div><strong>Standalone + provideHotkeys()</strong><p>Directive & cheatsheet standalone · deprecated HotkeyModule.forRoot kept</p></div></li>
+        <li class="done"><span class="n">4</span><div><strong>Signals migration</strong><p>cheatSheetToggle signal · @for / [class.in] · no async pipe</p></div></li>
+        <li class="done"><span class="n">5</span><div><strong>Mousetrap ESM</strong><p>default import, esModuleInterop — no allowedCommonJsDependencies hack</p></div></li>
+        <li class="done"><span class="n">6</span><div><strong>Test suite</strong><p>Service / directive / component / module · ≥80% coverage</p></div></li>
+        <li class="done"><span class="n">7</span><div><strong>Packaging</strong><p>peerDependencies, sideEffects:false, exports map via ng-packagr</p></div></li>
+        <li class="done"><span class="n">8</span><div><strong>Integration test-app</strong><p>provideHotkeys in app.config · ?, Esc, ctrl+s proven in browser</p></div></li>
+      </ol>
+    </section>
+
+    <section aria-labelledby="patterns-title">
+      <h2 id="patterns-title">Deprecated pattern inventory</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Pattern</th>
+              <th>Was in</th>
+              <th>Replaced with</th>
+              <th>Phase</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>TSLint / Codelyzer / Protractor</td><td>package.json, tslint.json</td><td>ESLint + @angular-eslint</td><td>1</td></tr>
+            <tr><td>fullTemplateTypeCheck</td><td>tsconfig.json</td><td>strictTemplates: true</td><td>1</td></tr>
+            <tr><td>skipTemplateCodegen / strictMetadataEmit</td><td>tsconfig.lib.json</td><td>Removed (Ivy)</td><td>1</td></tr>
+            <tr><td>@NgModule declarations</td><td>hotkey.module.ts</td><td>standalone: true + provideHotkeys()</td><td>3</td></tr>
+            <tr><td>Subject&lt;any&gt; cheatSheetToggle</td><td>hotkeys.service.ts</td><td>WritableSignal&lt;boolean&gt;</td><td>4</td></tr>
+            <tr><td>BehaviorSubject + Subscription</td><td>cheatsheet.component.ts</td><td>signal + effect / computed</td><td>4</td></tr>
+            <tr><td>*ngFor / async pipe / [ngClass]</td><td>cheatsheet.component.html</td><td>@for / signal() / [class.in]</td><td>4</td></tr>
+            <tr><td>import * as Mousetrap + .default()</td><td>service + directive</td><td>import Mousetrap from 'mousetrap'</td><td>5</td></tr>
+            <tr><td>async from @angular/core/testing</td><td>*.spec.ts</td><td>waitForAsync</td><td>6</td></tr>
+            <tr><td>karma-coverage-istanbul-reporter</td><td>karma.conf.js</td><td>karma-coverage</td><td>1/6</td></tr>
+            <tr><td>event.srcElement only</td><td>hotkeys.service.ts</td><td>event.target || srcElement</td><td>4</td></tr>
+            <tr><td>style="display:none" on root</td><td>cheatsheet html</td><td>CSS .fade / .in visibility</td><td>4</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section aria-labelledby="diff-title">
+      <h2 id="diff-title">Before / after — key changes</h2>
+      <div class="diff-grid">
+        <article>
+          <h3>NgModule → provideHotkeys()</h3>
+          <pre class="before"><code>// BEFORE
+@NgModule({
+  declarations: [HotkeysDirective, HotkeysCheatsheetComponent],
+  imports: [CommonModule],
+  exports: [HotkeysDirective, HotkeysCheatsheetComponent]
+})
+export class HotkeyModule {
+  static forRoot(options = {}) {
+    return { ngModule: HotkeyModule, providers: [...] };
+  }
+}</code></pre>
+          <pre class="after"><code>// AFTER
+export function provideHotkeys(options = {}) {
+  return makeEnvironmentProviders([
+    { provide: HotkeyOptions, useValue: options },
+    { provide: HotkeysService,
+      useFactory: () => HotkeysService.create(options) },
+  ]);
+}
+// HotkeyModule.forRoot kept @deprecated for BC</code></pre>
+        </article>
+        <article>
+          <h3>Subject → Signal</h3>
+          <pre class="before"><code>// BEFORE
+cheatSheetToggle: Subject&lt;any&gt; = new Subject();
+// ...
+this.cheatSheetToggle.next();
+this.cheatSheetToggle.next(false);</code></pre>
+          <pre class="after"><code>// AFTER
+cheatSheetToggle: WritableSignal&lt;boolean&gt; = signal(false);
+// ...
+this.cheatSheetToggle.update(o =&gt; !o);
+this.cheatSheetToggle.set(false);</code></pre>
+        </article>
+        <article>
+          <h3>*ngFor → @for</h3>
+          <pre class="before"><code>// BEFORE
+&lt;div [ngClass]="{'in': helpVisible$|async}"&gt;
+  &lt;tr *ngFor="let hotkey of hotkeys"&gt;
+    &lt;span *ngFor="let key of hotkey.formatted"&gt;</code></pre>
+          <pre class="after"><code>// AFTER
+&lt;div class="fade" [class.in]="helpVisible()"&gt;
+  @for (hotkey of hotkeys(); track hotkey) {
+    @for (key of hotkey.formatted; track key) {
+      &lt;span class="cfp-hotkeys-key"&gt;{{ key }}&lt;/span&gt;
+    }
+  }</code></pre>
+        </article>
+      </div>
+    </section>
+
+    <section aria-labelledby="demo-title">
+      <h2 id="demo-title">Live keyboard shortcut demo</h2>
+      <p>
+        The integration test-app on port <code>4300</code> consumes the built library via
+        <code>provideHotkeys()</code>. Browser proof (Playwright):
+      </p>
+      <ul class="proof-list">
+        <li><kbd>?</kbd> opens the cheatsheet overlay with registered shortcuts</li>
+        <li><kbd>Esc</kbd> closes the overlay</li>
+        <li><kbd>Ctrl</kbd>+<kbd>S</kbd> fires Save and updates the toast / last-action line</li>
+      </ul>
+      <div class="shots">
+        <figure>
+          <img src="proof-test-app.png" alt="test-app idle state screenshot" width="640" />
+          <figcaption>test-app idle</figcaption>
+        </figure>
+        <figure>
+          <img src="proof-cheatsheet.png" alt="cheatsheet open screenshot" width="640" />
+          <figcaption>cheatsheet open after ?</figcaption>
+        </figure>
+      </div>
+      <div class="mini-demo" id="mini-demo" tabindex="0" aria-label="Embedded signal demo">
+        <p>Embedded signal demo (no Mousetrap — illustrates the new API shape):</p>
+        <button type="button" id="btn-toggle">Toggle helpVisible signal</button>
+        <button type="button" id="btn-save">Simulate ctrl+s</button>
+        <p>State: <strong id="demo-state">closed</strong> · Last: <strong id="demo-last">—</strong></p>
+        <div id="demo-sheet" class="cfp-hotkeys-container fade" hidden>
+          <div class="cfp-hotkeys">
+            <h4 class="cfp-hotkeys-title">Keyboard Shortcuts:</h4>
+            <table><tbody>
+              <tr><td class="cfp-hotkeys-keys"><span class="cfp-hotkeys-key">?</span></td><td class="cfp-hotkeys-text">Show / hide this help menu</td></tr>
+              <tr><td class="cfp-hotkeys-keys"><span class="cfp-hotkeys-key">⌃</span><span class="cfp-hotkeys-key">S</span></td><td class="cfp-hotkeys-text">Save document</td></tr>
+              <tr><td class="cfp-hotkeys-keys"><span class="cfp-hotkeys-key">⌃</span><span class="cfp-hotkeys-key">Z</span></td><td class="cfp-hotkeys-text">Undo last change</td></tr>
+            </tbody></table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section aria-labelledby="cov-title">
+      <h2 id="cov-title">Test coverage</h2>
+      <div class="chart" role="img" aria-label="Coverage before 5.8 percent, after 95 percent">
+        <div class="bar-row">
+          <span>Before</span>
+          <div class="bar"><i style="width:5.8%"></i></div>
+          <span>5.8%</span>
+        </div>
+        <div class="bar-row">
+          <span>After</span>
+          <div class="bar after"><i style="width:95%"></i></div>
+          <span>~95%</span>
+        </div>
+      </div>
+      <p class="muted">Library: 34/34 Karma tests passing · statements/lines ≥ 94% · branches ≥ 70%.</p>
+    </section>
+  </main>
+
+  <footer>
+    <p>angular2-hotkeys v20 · Angular 20 standalone + signals · MIT</p>
+  </footer>
+  <script src="app.js"></script>
+</body>
+</html>

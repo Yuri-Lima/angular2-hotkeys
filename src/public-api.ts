@@ -8,3 +8,4 @@ export * from './lib/hotkeys-cheatsheet/hotkeys-cheatsheet.component';
 export * from './lib/hotkey.model';
 export * from './lib/hotkey.options';
 export * from './lib/hotkey.module';
+export * from './lib/hotkey.providers';

@@ -1,0 +1,26 @@
+<main class="wrap">
+  <header>
+    <h1>{{ title() }}</h1>
+    <p class="lead">
+      Integration proof that <code>angular2-hotkeys</code> works as a consumed dependency via
+      <code>provideHotkeys()</code>.
+    </p>
+  </header>
+
+  <section class="card">
+    <h2>Registered shortcuts</h2>
+    <ul>
+      <li><kbd>?</kbd> — open / close the cheatsheet overlay</li>
+      <li><kbd>Esc</kbd> — close the cheatsheet</li>
+      <li><kbd>Ctrl</kbd> + <kbd>S</kbd> — Save (shows toast)</li>
+      <li><kbd>Ctrl</kbd> + <kbd>Z</kbd> — Undo (shows toast)</li>
+    </ul>
+    <p>Last action: <strong id="last-action">{{ lastAction() }}</strong></p>
+  </section>
+
+  @if (toast(); as msg) {
+    <div class="toast" role="status" aria-live="polite">{{ msg }}</div>
+  }
+
+  <hotkeys-cheatsheet title="Keyboard Shortcuts:" />
+</main>
